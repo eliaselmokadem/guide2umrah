@@ -42,10 +42,11 @@ const Hero: React.FC = () => {
         <p className="text-xl mb-6">
           Ervaar een unieke umrah reis naar Mekka en Medina in 2024-2025
         </p>
-
-        <button className="bg-green-500 px-6 py-3 rounded text-black font-bold hover:bg-green-600 transition">
-          <Link to="/umrah">Pakketten</Link>
-        </button>
+        <Link to="/umrah">
+          <button className="bg-green-500 px-6 py-3 rounded text-black font-bold hover:bg-green-600 transition">
+            Pakketten
+          </button>
+        </Link>
       </div>
     </div>
   );

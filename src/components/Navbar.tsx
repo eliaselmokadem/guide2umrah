@@ -31,6 +31,11 @@ const Navbar: React.FC = () => {
               Over ons
             </Link>
           </li>
+          <Link to="/login">
+            <button className="bg-blue-500 px-6 py-1 rounded text-black font-bold hover:bg-blue-600 transition">
+              Login
+            </button>
+          </Link>
         </ul>
       </div>
     </nav>

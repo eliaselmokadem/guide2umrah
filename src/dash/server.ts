@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import path from "path";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -8,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Verbinding maken met MongoDB (zonder de oude opties)
+// Verbinding maken met MongoDB
 mongoose
   .connect(
     "mongodb+srv://admin:admin@g2mdb.spmzf.mongodb.net/?retryWrites=true&w=majority&appName=g2mdb"
@@ -50,6 +51,14 @@ app.post("/login", async (req: Request, res: Response) => {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
+});
+
+// Serve static files from React's build folder
+app.use(express.static(path.join(__dirname, "client/build")));
+
+// When no other route matches, serve the index.html from React build
+app.get("*", (req: Request, res: Response) => {
+  res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
 });
 
 // Server starten

@@ -24,7 +24,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "ts-node ./dash/server.ts",
+    "build": "npm i && ts-node ./dash/server.ts",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

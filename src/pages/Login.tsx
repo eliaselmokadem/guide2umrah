@@ -13,7 +13,7 @@ const Login = () => {
       .value;
 
     // Haal de API-URL uit de omgevingsvariabele
-    const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+    const apiUrl = process.env.REACT_APP_API_URL;
 
     try {
       // Verzoek sturen naar de backend met de juiste API-URL

@@ -6,6 +6,9 @@ import foto3 from "../assets/fotorecht3.jpg";
 import foto4 from "../assets/fotorecht4.jpg";
 import foto5 from "../assets/fotorecht5.jpg";
 import foto6 from "../assets/fotorecht6.jpg";
+import safarcom from "../assets/safarcom.png";
+import umrah2go from "../assets/umrah2go.png";
+import jeddahflights from "../assets/jeddahflights.png";
 
 const Hero: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -28,7 +31,7 @@ const Hero: React.FC = () => {
           position: "absolute",
           top: 0,
           left: 0,
-          backgroundImage: `url(${images[currentIndex]})`, // Set background image dynamically
+          backgroundImage: `url(${foto5})`, // Set background image dynamically
           backgroundSize: "cover",
           backgroundPosition: "center",
           transition: "background-image 1s ease-in-out", // Animation for background image
@@ -37,6 +40,7 @@ const Hero: React.FC = () => {
       ></div>
 
       {/* Content Section */}
+
       <div className="bg-black bg-opacity-55 h-full flex flex-col justify-center items-center text-white">
         <h2 className="text-4xl font-bold mb-4">Umrah België</h2>
         <p className="text-xl mb-6">
@@ -47,6 +51,27 @@ const Hero: React.FC = () => {
             Pakketten
           </button>
         </Link>
+
+        <div className="bg-white mh-[500px] mw-[750px] mt-4 rounded-3xl text-black">
+          <div
+            className="flex justify-center items-center flex-wrap gap-4 mt-4"
+            style={{ borderRadius: 20, marginBottom: 15, marginTop: 15 }}
+          >
+            <image href="">
+              <img src={safarcom} className="max-h-[150px]" alt="Safarcom" />
+            </image>
+            <image href="">
+              <img src={umrah2go} className="max-h-[150px]" alt="Umrah2Go" />
+            </image>
+            <image href="https://jeddahflights.com/">
+              <img
+                src={jeddahflights}
+                className="max-h-[150px]"
+                alt="Jeddah Flights"
+              />
+            </image>
+          </div>
+        </div>
       </div>
     </div>
   );

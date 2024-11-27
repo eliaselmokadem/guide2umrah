@@ -2,6 +2,15 @@ import React from "react";
 import Navbar from "../components/Navbar"; // Importeer je bestaande Navbar-component
 import backgroundImage from "../assets/mekkahfullscreen.jpg"; // Importeer je achtergrondafbeelding
 import { Link } from "react-router-dom";
+import foto1 from "../assets/fotorecht1.jpg";
+import foto2 from "../assets/fotorecht2.jpg";
+import foto3 from "../assets/fotorecht3.jpg";
+import foto4 from "../assets/fotorecht4.jpg";
+import foto5 from "../assets/fotorecht5.jpg";
+import foto6 from "../assets/fotorecht6.jpg";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 const packages = [
   {
@@ -11,6 +20,7 @@ const packages = [
     price: "2299,-",
     rating: 5,
     button: "Meer Info",
+    images: [foto1, foto2],
   },
   {
     title: "November Umrah",
@@ -19,6 +29,7 @@ const packages = [
     price: "1399,-",
     rating: 5,
     button: "Meer Info",
+    images: [foto3, foto4],
   },
   {
     title: "December Umrah",
@@ -27,6 +38,7 @@ const packages = [
     price: "1499,-",
     rating: 5,
     button: "Meer Info",
+    images: [foto5, foto6],
   },
   {
     title: "Wintervakantie",
@@ -35,10 +47,19 @@ const packages = [
     price: "2399,-",
     rating: 5,
     button: "Meer Info",
+    images: [foto1, foto2],
   },
 ];
 
 const Umrah: React.FC = () => {
+  const sliderSettings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+  };
+
   return (
     <div>
       {/* Navbar blijft buiten de overlay */}
@@ -84,6 +105,20 @@ const Umrah: React.FC = () => {
                   <h2 className="text-lg font-bold mb-2">{pkg.title}</h2>
                   <p className="text-sm text-gray-500">{pkg.date}</p>
                   <p className="text-sm text-gray-500">{pkg.duration}</p>
+
+                  {/* Slider voor pakketafbeeldingen */}
+                  <Slider {...sliderSettings} className="mt-4">
+                    {pkg.images.map((image, imgIndex) => (
+                      <div key={imgIndex}>
+                        <img
+                          src={image}
+                          alt={`${pkg.title} - afbeelding ${imgIndex + 1}`}
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                      </div>
+                    ))}
+                  </Slider>
+
                   <p className="text-xl font-bold text-green-600 mt-4">
                     Vanaf {pkg.price}
                   </p>

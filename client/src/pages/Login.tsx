@@ -2,22 +2,20 @@ import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import Logo from "../assets/logotransparent.png";
 
-const Login = () => {
+const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const email = (document.getElementById("email") as HTMLInputElement).value;
     const password = (document.getElementById("password") as HTMLInputElement)
       .value;
 
-    // Haal de API-URL uit de omgevingsvariabele
     const apiUrl = process.env.REACT_APP_API_URL;
 
     try {
-      // Verzoek sturen naar de backend met de juiste API-URL
-      const response = await fetch(`${apiUrl}/login`, {
+      const response = await fetch(`${apiUrl}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -30,14 +28,12 @@ const Login = () => {
       if (response.ok) {
         console.log("Ingelogd:", data.token);
 
-        // Bewaar het token en verwerk de login (bijv. redirect naar dashboard)
-        localStorage.setItem("token", data.token); // Opslaan van JWT-token
-        setError(null); // Foutmelding resetten bij succes
+        localStorage.setItem("token", data.token);
+        setError(null);
 
-        // Optioneel: Redirect naar het dashboard of andere pagina
         window.location.href = "/dashboard";
       } else {
-        setError(data.message); // Toon foutmelding van backend
+        setError(data.message);
       }
     } catch (err) {
       console.error("Fout bij inloggen:", err);

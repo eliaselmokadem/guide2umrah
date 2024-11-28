@@ -1,64 +1,50 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar"; // Importeer je bestaande Navbar-component
 import backgroundImage from "../assets/mekkahfullscreen.jpg"; // Importeer je achtergrondafbeelding
 import { Link } from "react-router-dom";
-import foto1 from "../assets/fotorecht1.jpg";
-import foto2 from "../assets/fotorecht2.jpg";
-import foto3 from "../assets/fotorecht3.jpg";
-import foto4 from "../assets/fotorecht4.jpg";
-import foto5 from "../assets/fotorecht5.jpg";
-import foto6 from "../assets/fotorecht6.jpg";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
 
-const packages = [
-  {
-    title: "Ramadan / Krokusvakantie",
-    date: "27/02 - 08/03",
-    duration: "10 DAGEN",
-    price: "2299,-",
-    rating: 5,
-    button: "Meer Info",
-    images: [foto1, foto2],
-  },
-  {
-    title: "November Umrah",
-    date: "21/11 - 28/11",
-    duration: "7 DAGEN",
-    price: "1399,-",
-    rating: 5,
-    button: "Meer Info",
-    images: [foto3, foto4],
-  },
-  {
-    title: "December Umrah",
-    date: "03/12 - 12/12",
-    duration: "9 DAGEN",
-    price: "1499,-",
-    rating: 5,
-    button: "Meer Info",
-    images: [foto5, foto6],
-  },
-  {
-    title: "Wintervakantie",
-    date: "27/12 - 06/01",
-    duration: "11 DAGEN",
-    price: "2399,-",
-    rating: 5,
-    button: "Meer Info",
-    images: [foto1, foto2],
-  },
-];
+interface Package {
+  _id: string;
+  name: string; // Aangepast van title naar name
+  date: string;
+  description: string;
+  price: number;
+  photoPath: string; // Voor de afbeelding
+}
 
 const Umrah: React.FC = () => {
-  const sliderSettings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-  };
+  const [packages, setPackages] = useState<Package[]>([]); // State voor de pakketten
+  const [loading, setLoading] = useState(true); // State voor de laadtoestand
+  const [error, setError] = useState<string | null>(null); // State voor fouten
+
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/packages`
+        );
+
+        if (!response.ok) {
+          throw new Error("Kan de pakketten niet ophalen.");
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          setPackages(data); // Zet de opgehaalde data in de state
+        } else {
+          throw new Error("Ongeldige data ontvangen van de server.");
+        }
+      } catch (err) {
+        setError("Er is een fout opgetreden bij het ophalen van de pakketten.");
+        console.error(err);
+      } finally {
+        setLoading(false); // Zet de laadtoestand op false
+      }
+    };
+
+    fetchPackages();
+  }, []);
 
   return (
     <div>
@@ -94,43 +80,45 @@ const Umrah: React.FC = () => {
             Beschikbare Umrah Pakketten
           </h1>
 
-          {/* Platform/container voor de data */}
-          <div className="bg-white p-6 rounded-lg shadow-lg space-y-8 mt-12 md:mt-16 lg:mt-24">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {packages.map((pkg, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-100 p-4 rounded-lg shadow-md"
-                >
-                  <h2 className="text-lg font-bold mb-2">{pkg.title}</h2>
-                  <p className="text-sm text-gray-500">{pkg.date}</p>
-                  <p className="text-sm text-gray-500">{pkg.duration}</p>
+          {/* Laadtoestand of foutmelding weergeven */}
+          {loading ? (
+            <p className="text-white">Laden...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : packages.length > 0 ? (
+            <div className="bg-white p-6 rounded-lg shadow-lg space-y-8 mt-12 md:mt-16 lg:mt-24">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                {packages.map((pkg) => (
+                  <div
+                    key={pkg._id}
+                    className="bg-gray-100 p-4 rounded-lg shadow-md"
+                  >
+                    <h2 className="text-lg font-bold mb-2">{pkg.name}</h2>
+                    <p className="text-sm text-gray-500">{pkg.date}</p>
+                    <p className="text-sm text-gray-500">{pkg.description}</p>
 
-                  {/* Slider voor pakketafbeeldingen */}
-                  <Slider {...sliderSettings} className="mt-4">
-                    {pkg.images.map((image, imgIndex) => (
-                      <div key={imgIndex}>
-                        <img
-                          src={image}
-                          alt={`${pkg.title} - afbeelding ${imgIndex + 1}`}
-                          className="w-full h-48 object-cover rounded-lg"
-                        />
-                      </div>
-                    ))}
-                  </Slider>
+                    {/* Afbeelding weergeven */}
+                    <img
+                      src={`${pkg.photoPath}`}
+                      alt={pkg.name}
+                      className="w-full h-48 object-cover rounded-lg mt-4"
+                    />
 
-                  <p className="text-xl font-bold text-green-600 mt-4">
-                    Vanaf {pkg.price}
-                  </p>
-                  <Link to={`/umrah/package/${index}`}>
-                    <button className="mt-6 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
-                      {pkg.button}
-                    </button>
-                  </Link>
-                </div>
-              ))}
+                    <p className="text-xl font-bold text-green-600 mt-4">
+                      Vanaf €{pkg.price}
+                    </p>
+                    <Link to={`/umrah/package/${pkg._id}`}>
+                      <button className="mt-6 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
+                        Meer Info
+                      </button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <p className="text-white">Geen pakketten beschikbaar.</p>
+          )}
         </div>
       </div>
     </div>

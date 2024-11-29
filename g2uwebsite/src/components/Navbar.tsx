@@ -1,6 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import "./Navbar.css"; // Zorg ervoor dat je deze CSS hebt voor de animatie
+import { Link } from "react-router-dom"; // Zorg ervoor dat je deze CSS hebt voor de animatie
 import logo from "../assets/logotransparent.png";
 
 const Navbar: React.FC = () => {

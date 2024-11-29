@@ -5,7 +5,7 @@ import logo from "../assets/logotransparent.png";
 
 const Navbar: React.FC = () => {
   return (
-    <nav className="bg-white text-black py-4 sticky top-0 z-50 shadow-md">
+    <nav className="bg-white text-black py-1 sticky top-0 z-50 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         <img src={logo} style={{ maxHeight: 95 }} alt="" />
         <ul className="flex space-x-6">
@@ -29,7 +29,7 @@ const Navbar: React.FC = () => {
             </Link>
           </li>
           <Link to="/login">
-            <button className="bg-blue-500 px-6 py-1 rounded text-black font-bold hover:bg-blue-600 transition">
+            <button className="bg-green-500 px-6 py-1 rounded text-black font-bold hover:bg-blue-300 transition">
               Login
             </button>
           </Link>

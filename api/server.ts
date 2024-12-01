@@ -7,21 +7,41 @@ import cors from "cors";
 import multer from "multer";
 import { UploadApiResponse, v2 as cloudinary } from "cloudinary";
 
-// Laad .env variabelen
+// Load .env variables
 dotenv.config();
 
 const app = express();
 
-// Gebruik JSON en CORS
+// Use JSON middleware
 app.use(express.json());
-app.use(cors());
 
-// Cloudinary configureren
+// CORS configuration using environment variables
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "").split(",");
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true); // Allow if origin is in the allowed list
+      } else {
+        callback(new Error("Not allowed by CORS")); // Block if origin is not allowed
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true, // Allow credentials like cookies
+  })
+);
+
+// Cloudinary configuration
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
 
 // Multer configureren
 const storage = multer.memoryStorage(); // Bestanden in geheugen opslaan voor directe upload

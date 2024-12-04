@@ -172,6 +172,19 @@ app.get("/api/packages", async (req: Request, res: Response) => {
   }
 });
 
+app.get("/api/packages/:id", async (req: Request, res: Response) => {
+  try {
+    const packageData = await Package.findById(req.params.id);
+    if (!packageData) {
+      return res.status(404).json({ message: "Package not found" });
+    }
+    res.json(packageData);
+  } catch (error) {
+    console.error("Error fetching package:", error);
+    res.status(500).json({ message: "Error fetching package" });
+  }
+});
+
 app.put("/api/packages/:id", upload.single("photo"), async (req, res) => {
   const { id } = req.params;
   const { name, date, description, price } = req.body;

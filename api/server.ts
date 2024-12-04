@@ -184,6 +184,19 @@ app.get("/api/packages", async (req: Request, res: Response) => {
   }
 });
 
+app.get("/api/packages/:id", async (req: Request, res: Response) => {
+  try {
+    const packageData = await Package.findById(req.params.id);
+    if (!packageData) {
+      return res.status(404).json({ message: "Pakket niet gevonden." });
+    }
+    res.json(packageData);
+  } catch (error) {
+    console.error("Error fetching package:", error);
+    res.status(500).json({ message: "Error fetching package." });
+  }
+});
+
 app.put(
   "/api/packages/:id",
   upload.single("photo"),
@@ -269,6 +282,19 @@ app.get("/api/services", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Fout bij het ophalen van services:", error);
     res.status(500).json({ message: "Er is iets misgegaan." });
+  }
+});
+
+app.get("/api/services/:id", async (req: Request, res: Response) => {
+  try {
+    const serviceData = await Service.findById(req.params.id);
+    if (!serviceData) {
+      return res.status(404).json({ message: "Service niet gevonden." });
+    }
+    res.json(serviceData);
+  } catch (error) {
+    console.error("Error fetching service:", error);
+    res.status(500).json({ message: "Error fetching service." });
   }
 });
 

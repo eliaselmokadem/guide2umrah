@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(cors({
   origin: ['https://guide2umrah.netlify.app', 'http://localhost:3000', 'http://localhost:3001'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Methods'],
   credentials: true
 }));
 

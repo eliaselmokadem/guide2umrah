@@ -22,6 +22,8 @@ app.use(
       "http://localhost:3001",
       "https://guide2umrah.com",
       "https://www.guide2umrah.com",
+      "http://www.guide2umrah.com",
+      "http://guide2umrah.com",
       "https://guide2umrah.be",
       "https://guide2umrah.nl",
       "https://guide2umrah.eu",

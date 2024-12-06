@@ -89,7 +89,7 @@ interface IPackage {
   date: string;
   description: string;
   price: number;
-  photoPath: string;
+  photoPaths: string[];
 }
 
 const packageSchema = new mongoose.Schema<IPackage>({
@@ -97,7 +97,7 @@ const packageSchema = new mongoose.Schema<IPackage>({
   date: { type: String, required: true },
   description: { type: String, required: true },
   price: { type: Number, required: true },
-  photoPath: { type: String, required: true },
+  photoPaths: { type: [String], required: true },
 });
 
 const Package = mongoose.model<IPackage>("Package", packageSchema);
@@ -107,14 +107,14 @@ interface IService {
   name: string;
   description: string;
   price: number;
-  photoPath: string;
+  photoPaths: string[];
 }
 
 const serviceSchema = new mongoose.Schema<IService>({
   name: { type: String, required: true },
   description: { type: String, required: true },
   price: { type: Number, required: true },
-  photoPath: { type: String, required: true },
+  photoPaths: { type: [String], required: true },
 });
 
 const Service = mongoose.model<IService>("Service", serviceSchema);
@@ -147,40 +147,8 @@ app.post("/api/login", async (req: Request, res: Response) => {
   }
 });
 
-// Packages CRUD
-app.post(
-  "/api/packages",
-  upload.single("photo"),
-  async (req: Request, res: Response) => {
-    try {
-      const { name, date, description, price } = req.body;
-
-      if (!req.file) {
-        return res.status(400).json({ message: "Foto is vereist." });
-      }
-
-      const result = await uploadToCloudinary(
-        req.file.buffer,
-        "umrah-packages"
-      );
-
-      const newPackage = new Package({
-        name,
-        date,
-        description,
-        price: parseFloat(price),
-        photoPath: result.secure_url,
-      });
-
-      await newPackage.save();
-      res.status(201).json({ message: "Pakket succesvol toegevoegd!" });
-    } catch (error) {
-      console.error("Fout bij het toevoegen van pakket:", error);
-      res.status(500).json({ message: "Er is iets misgegaan." });
-    }
-  }
-);
-
+// **Packages CRUD**
+// GET all packages
 app.get("/api/packages", async (req: Request, res: Response) => {
   try {
     const packages = await Package.find();
@@ -191,6 +159,7 @@ app.get("/api/packages", async (req: Request, res: Response) => {
   }
 });
 
+// GET single package by ID
 app.get("/api/packages/:id", async (req: Request, res: Response) => {
   try {
     const packageData = await Package.findById(req.params.id);
@@ -204,9 +173,46 @@ app.get("/api/packages/:id", async (req: Request, res: Response) => {
   }
 });
 
+// POST create a new package
+app.post(
+  "/api/packages",
+  upload.array("photos", 10),
+  async (req: Request, res: Response) => {
+    try {
+      const { name, date, description, price } = req.body;
+
+      if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
+        return res.status(400).json({ message: "Foto's zijn vereist." });
+      }
+
+      const photoResults = await Promise.all(
+        (req.files as Express.Multer.File[]).map((file) =>
+          uploadToCloudinary(file.buffer, "umrah-packages")
+        )
+      );
+      const photoPaths = photoResults.map((result) => result.secure_url);
+
+      const newPackage = new Package({
+        name,
+        date,
+        description,
+        price: parseFloat(price),
+        photoPaths,
+      });
+
+      await newPackage.save();
+      res.status(201).json({ message: "Pakket succesvol toegevoegd!" });
+    } catch (error) {
+      console.error("Fout bij het toevoegen van pakket:", error);
+      res.status(500).json({ message: "Er is iets misgegaan." });
+    }
+  }
+);
+
+// PUT update a package
 app.put(
   "/api/packages/:id",
-  upload.single("photo"),
+  upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
     const { name, date, description, price } = req.body;
@@ -219,18 +225,18 @@ app.put(
         price: parseFloat(price),
       };
 
-      if (req.file) {
-        const result = await uploadToCloudinary(
-          req.file.buffer,
-          "umrah-packages"
+      if (req.files && (req.files as Express.Multer.File[]).length > 0) {
+        const photoResults = await Promise.all(
+          (req.files as Express.Multer.File[]).map((file) =>
+            uploadToCloudinary(file.buffer, "umrah-packages")
+          )
         );
-        updateData.photoPath = result.secure_url;
+        updateData.photoPaths = photoResults.map((result) => result.secure_url);
       }
 
       const updatedPackage = await Package.findByIdAndUpdate(id, updateData, {
         new: true,
       });
-
       res.status(200).json(updatedPackage);
     } catch (error) {
       console.error("Error updating package:", error);
@@ -239,6 +245,7 @@ app.put(
   }
 );
 
+// DELETE a package
 app.delete("/api/packages/:id", async (req: Request, res: Response) => {
   try {
     await Package.findByIdAndDelete(req.params.id);
@@ -249,39 +256,8 @@ app.delete("/api/packages/:id", async (req: Request, res: Response) => {
   }
 });
 
-// Services CRUD
-app.post(
-  "/api/services",
-  upload.single("photo"),
-  async (req: Request, res: Response) => {
-    try {
-      const { name, description, price } = req.body;
-
-      if (!req.file) {
-        return res.status(400).json({ message: "Foto is vereist." });
-      }
-
-      const result = await uploadToCloudinary(
-        req.file.buffer,
-        "umrah-services"
-      );
-
-      const newService = new Service({
-        name,
-        description,
-        price: parseFloat(price),
-        photoPath: result.secure_url,
-      });
-
-      await newService.save();
-      res.status(201).json({ message: "Service succesvol toegevoegd!" });
-    } catch (error) {
-      console.error("Fout bij het toevoegen van service:", error);
-      res.status(500).json({ message: "Er is iets misgegaan." });
-    }
-  }
-);
-
+// **Services CRUD**
+// GET all services
 app.get("/api/services", async (req: Request, res: Response) => {
   try {
     const services = await Service.find();
@@ -292,6 +268,7 @@ app.get("/api/services", async (req: Request, res: Response) => {
   }
 });
 
+// GET single service by ID
 app.get("/api/services/:id", async (req: Request, res: Response) => {
   try {
     const serviceData = await Service.findById(req.params.id);
@@ -305,32 +282,64 @@ app.get("/api/services/:id", async (req: Request, res: Response) => {
   }
 });
 
+// POST create a new service
+app.post(
+  "/api/services",
+  upload.array("photos", 10),
+  async (req: Request, res: Response) => {
+    try {
+      const { name, description, price } = req.body;
+
+      if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
+        return res.status(400).json({ message: "Foto's zijn vereist." });
+      }
+
+      const photoResults = await Promise.all(
+        (req.files as Express.Multer.File[]).map((file) =>
+          uploadToCloudinary(file.buffer, "umrah-services")
+        )
+      );
+      const photoPaths = photoResults.map((result) => result.secure_url);
+
+      const newService = new Service({
+        name,
+        description,
+        price: parseFloat(price),
+        photoPaths,
+      });
+
+      await newService.save();
+      res.status(201).json({ message: "Service succesvol toegevoegd!" });
+    } catch (error) {
+      console.error("Fout bij het toevoegen van service:", error);
+      res.status(500).json({ message: "Er is iets misgegaan." });
+    }
+  }
+);
+
+// PUT update a service
 app.put(
   "/api/services/:id",
-  upload.single("photo"),
+  upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
     const { name, description, price } = req.body;
 
     try {
-      const updateData: any = {
-        name,
-        description,
-        price: parseFloat(price),
-      };
+      const updateData: any = { name, description, price: parseFloat(price) };
 
-      if (req.file) {
-        const result = await uploadToCloudinary(
-          req.file.buffer,
-          "umrah-services"
+      if (req.files && (req.files as Express.Multer.File[]).length > 0) {
+        const photoResults = await Promise.all(
+          (req.files as Express.Multer.File[]).map((file) =>
+            uploadToCloudinary(file.buffer, "umrah-services")
+          )
         );
-        updateData.photoPath = result.secure_url;
+        updateData.photoPaths = photoResults.map((result) => result.secure_url);
       }
 
       const updatedService = await Service.findByIdAndUpdate(id, updateData, {
         new: true,
       });
-
       res.status(200).json(updatedService);
     } catch (error) {
       console.error("Error updating service:", error);
@@ -339,6 +348,7 @@ app.put(
   }
 );
 
+// DELETE a service
 app.delete("/api/services/:id", async (req: Request, res: Response) => {
   try {
     await Service.findByIdAndDelete(req.params.id);

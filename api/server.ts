@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import multer from "multer";
 import { UploadApiResponse, v2 as cloudinary } from "cloudinary";
+import serverless from "serverless-http";
 
 // Load environment variables
 dotenv.config();
@@ -359,6 +360,5 @@ app.delete("/api/services/:id", async (req: Request, res: Response) => {
   }
 });
 
-// Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Instead of app.listen(), export a serverless handler
+export const handler = serverless(app);

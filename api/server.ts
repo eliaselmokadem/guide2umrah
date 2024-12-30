@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import multer from "multer";
 import { UploadApiResponse, v2 as cloudinary } from "cloudinary";
+import { sendConfirmationEmail } from "./emailService";
 //import serverless from "serverless-http";
 
 // Load environment variables
@@ -415,9 +416,12 @@ app.post("/api/subscribe", async (req: Request, res: Response) => {
     const newSubscription = new EmailSubscription({ email });
     await newSubscription.save();
 
+    // Send confirmation email
+    await sendConfirmationEmail(email);
+
     return res.status(201).json({ 
       success: true, 
-      message: "Bedankt voor je inschrijving! We houden je op de hoogte." 
+      message: "Bedankt voor je inschrijving! We hebben je een bevestigingsmail gestuurd." 
     });
 
   } catch (error) {

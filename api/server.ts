@@ -44,21 +44,18 @@ cloudinary.config({
 
 // Email service configuration
 const transporter = nodemailer.createTransport({
-  host: "smtp-mail.outlook.com",
+  host: 'smtp.sendgrid.net',
   port: 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  },
-  tls: {
-    ciphers: 'SSLv3'
+    user: 'apikey', // SendGrid username is always 'apikey'
+    pass: process.env.SENDGRID_API_KEY
   }
 });
 
 const sendConfirmationEmail = async (recipientEmail: string) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: 'Guide2Umrah <noreply@guide2umrah.com>',
     to: recipientEmail,
     subject: 'Bedankt voor je interesse in Guide2Umrah',
     html: `

@@ -6,8 +6,7 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import multer from "multer";
 import { UploadApiResponse, v2 as cloudinary } from "cloudinary";
-import { sendConfirmationEmail } from "./emailService";
-//import serverless from "serverless-http";
+import nodemailer from 'nodemailer';
 
 // Load environment variables
 dotenv.config();
@@ -42,6 +41,42 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// Email service configuration
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
+
+const sendConfirmationEmail = async (recipientEmail: string) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: recipientEmail,
+    subject: 'Bedankt voor je interesse in Guide2Umrah',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #10B981;">Bedankt voor je interesse in Guide2Umrah!</h2>
+        <p style="font-size: 16px; line-height: 1.5; color: #4B5563;">
+          We sturen je bericht zodra de site online is.
+        </p>
+        <p style="font-size: 16px; line-height: 1.5; color: #4B5563;">
+          Met vriendelijke groet,<br>
+          Het Guide2Umrah Team
+        </p>
+      </div>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Error sending email:', error);
+    throw error;
+  }
+};
 
 // Multer configuration
 const storage = multer.memoryStorage();
@@ -360,7 +395,6 @@ app.delete("/api/services/:id", async (req: Request, res: Response) => {
     res.status(500).json({ message: "Failed to delete service." });
   }
 });
-
 
 // Email Subscription Schema and Model
 interface IEmailSubscription {

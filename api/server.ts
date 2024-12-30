@@ -41,21 +41,24 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-//tets
-// Email service configuration
+
+// Email configuration
 const transporter = nodemailer.createTransport({
-  host: 'smtp.sendgrid.net',
+  host: "smtp.office365.com",
   port: 587,
   secure: false,
   auth: {
-    user: 'apikey', // SendGrid username is always 'apikey'
-    pass: process.env.SENDGRID_API_KEY
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+  },
+  tls: {
+    ciphers: 'SSLv3'
   }
 });
 
 const sendConfirmationEmail = async (recipientEmail: string) => {
   const mailOptions = {
-    from: 'Guide2Umrah <noreply@guide2umrah.com>',
+    from: process.env.EMAIL_USER,
     to: recipientEmail,
     subject: 'Bedankt voor je interesse in Guide2Umrah',
     html: `

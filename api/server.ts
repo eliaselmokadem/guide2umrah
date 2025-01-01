@@ -6,12 +6,15 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import multer from "multer";
 import { UploadApiResponse, v2 as cloudinary } from "cloudinary";
-import sgMail from '@sendgrid/mail';
+import { Resend } from 'resend';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
+
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Middleware
 app.use(express.json());
@@ -42,15 +45,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// SendGrid configuration
-sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
-
 const sendConfirmationEmail = async (recipientEmail: string) => {
-  const msg = {
-    to: recipientEmail,
-    from: 'eliaselmok@gmail.com', // This needs to be verified in SendGrid
-    subject: 'Welkom bij Guide2Umrah - Jouw Reis Begint Hier',
-    html: `
+  try {
+    await resend.emails.send({
+      from: 'Guide2Umrah <onboarding@resend.dev>',
+      to: recipientEmail,
+      subject: 'Welkom bij Guide2Umrah - Jouw Reis Begint Hier',
+      html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <h2 style="color: #10B981; margin-bottom: 20px; text-align: center;">Welkom bij Guide2Umrah!</h2>
@@ -92,10 +93,7 @@ const sendConfirmationEmail = async (recipientEmail: string) => {
         </div>
       </div>
     `
-  };
-
-  try {
-    await sgMail.send(msg);
+    });
   } catch (error) {
     console.error('Error sending email:', error);
     throw error;

@@ -60,17 +60,47 @@ const sendConfirmationEmail = async (recipientEmail: string) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: recipientEmail,
-    subject: 'Bedankt voor je interesse in Guide2Umrah',
+    subject: 'Welkom bij Guide2Umrah - Jouw Reis Begint Hier',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #10B981;">Bedankt voor je interesse in Guide2Umrah!</h2>
-        <p style="font-size: 16px; line-height: 1.5; color: #4B5563;">
-          We sturen je bericht zodra de site online is.
-        </p>
-        <p style="font-size: 16px; line-height: 1.5; color: #4B5563;">
-          Met vriendelijke groet,<br>
-          Het Guide2Umrah Team
-        </p>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h2 style="color: #10B981; margin-bottom: 20px; text-align: center;">Welkom bij Guide2Umrah!</h2>
+          
+          <p style="font-size: 16px; line-height: 1.6; color: #4B5563; margin-bottom: 20px;">
+            Assalamu alaikum,
+          </p>
+          
+          <p style="font-size: 16px; line-height: 1.6; color: #4B5563; margin-bottom: 20px;">
+            Bedankt voor je interesse in Guide2Umrah! We zijn momenteel hard bezig om het platform te perfectioneren 
+            zodat we je de best mogelijke ervaring kunnen bieden bij het plannen van je Umrah reis.
+          </p>
+
+          <p style="font-size: 16px; line-height: 1.6; color: #4B5563; margin-bottom: 20px;">
+            Zodra we live gaan, ben jij een van de eersten die hiervan op de hoogte wordt gesteld. Je kunt dan 
+            direct gebruik maken van:
+          </p>
+
+          <ul style="color: #4B5563; margin-bottom: 20px; padding-left: 20px;">
+            <li style="margin-bottom: 10px;">Uitgebreide Umrah gidsen en tips</li>
+            <li style="margin-bottom: 10px;">Persoonlijke reisplanning assistentie</li>
+            <li style="margin-bottom: 10px;">Speciale aanbiedingen voor vroege gebruikers</li>
+          </ul>
+
+          <p style="font-size: 16px; line-height: 1.6; color: #4B5563; margin-bottom: 20px;">
+            We waarderen je geduld en vertrouwen in ons. InshaAllah kunnen we je snel meer nieuws brengen!
+          </p>
+
+          <div style="text-align: center; margin-top: 30px;">
+            <p style="font-size: 16px; line-height: 1.6; color: #4B5563;">
+              Met vriendelijke groet,<br>
+              Het Guide2Umrah Team
+            </p>
+          </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #6B7280;">
+          <p> ${new Date().getFullYear()} Guide2Umrah - Alle rechten voorbehouden</p>
+        </div>
       </div>
     `
   };

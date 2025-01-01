@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import multer from "multer";
 import { UploadApiResponse, v2 as cloudinary } from "cloudinary";
-import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 
 // Load environment variables
 dotenv.config();
@@ -42,21 +42,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Email configuration
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
-});
+// SendGrid configuration
+sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
 
 const sendConfirmationEmail = async (recipientEmail: string) => {
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
+  const msg = {
     to: recipientEmail,
+    from: 'eliaselmok@gmail.com', // This needs to be verified in SendGrid
     subject: 'Welkom bij Guide2Umrah - Jouw Reis Begint Hier',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
@@ -103,7 +95,7 @@ const sendConfirmationEmail = async (recipientEmail: string) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await sgMail.send(msg);
   } catch (error) {
     console.error('Error sending email:', error);
     throw error;

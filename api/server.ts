@@ -47,8 +47,9 @@ cloudinary.config({
 
 const sendConfirmationEmail = async (recipientEmail: string) => {
   try {
-    await resend.emails.send({
-      from: 'guide2umrah <noreply@guide2umrah.com>',
+    console.log(`Attempting to send email to: ${recipientEmail}`);
+    const result = await resend.emails.send({
+      from: 'Guide2Umrah <noreply@guide2umrah.com>',
       to: recipientEmail,
       subject: 'Welkom bij Guide2Umrah - Jouw Reis Begint Hier',
       html: `
@@ -98,7 +99,11 @@ const sendConfirmationEmail = async (recipientEmail: string) => {
     // Log the actual recipient email for development purposes
     console.log(`Email sent to ${recipientEmail}`);
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('Error sending email:', {
+      recipient: recipientEmail,
+      error: error.message,
+      details: error.response?.data || error
+    });
     throw error;
   }
 };

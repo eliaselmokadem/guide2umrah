@@ -48,7 +48,7 @@ cloudinary.config({
 const sendConfirmationEmail = async (recipientEmail: string) => {
   try {
     console.log(`Attempting to send email to: ${recipientEmail}`);
-    const result = await resend.emails.send({
+    await resend.emails.send({
       from: 'Guide2Umrah <noreply@guide2umrah.com>',
       to: recipientEmail,
       subject: 'Welkom bij Guide2Umrah - Jouw Reis Begint Hier',

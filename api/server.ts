@@ -51,7 +51,7 @@ const sendConfirmationEmail = async (recipientEmail: string) => {
     const toEmail = process.env.NODE_ENV === 'production' ? recipientEmail : 'eliaselmok@gmail.com';
     
     await resend.emails.send({
-      from: 'g2u <noreply@guide2umrah.com>',
+      from: 'guide2umrah <noreply@guide2umrah.com>',
       to: toEmail,
       subject: 'Welkom bij Guide2Umrah - Jouw Reis Begint Hier',
       html: `

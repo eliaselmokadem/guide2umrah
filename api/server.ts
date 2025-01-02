@@ -481,7 +481,7 @@ app.post("/api/subscribe", async (req: Request, res: Response) => {
 
     return res.status(201).json({ 
       success: true, 
-      message: "Bedankt voor je inschrijving! We hebben je een bevestigingsmail gestuurd." 
+      message: "Bedankt voor je inschrijving! We hebben je een bevestigingsmail gestuurd. Als je het niet direct ontvangt, zit het in je spam folder." 
     });
 
   } catch (error) {

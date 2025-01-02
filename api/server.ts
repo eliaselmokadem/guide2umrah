@@ -47,12 +47,9 @@ cloudinary.config({
 
 const sendConfirmationEmail = async (recipientEmail: string) => {
   try {
-    // During development, only send to verified email
-    const toEmail = process.env.NODE_ENV === 'production' ? recipientEmail : 'eliaselmok@gmail.com';
-    
     await resend.emails.send({
       from: 'guide2umrah <noreply@guide2umrah.com>',
-      to: toEmail,
+      to: recipientEmail,
       subject: 'Welkom bij Guide2Umrah - Jouw Reis Begint Hier',
       html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
@@ -99,9 +96,7 @@ const sendConfirmationEmail = async (recipientEmail: string) => {
     });
 
     // Log the actual recipient email for development purposes
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`Development mode: Email would be sent to ${recipientEmail} in production`);
-    }
+    console.log(`Email sent to ${recipientEmail}`);
   } catch (error) {
     console.error('Error sending email:', error);
     throw error;

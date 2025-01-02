@@ -51,7 +51,8 @@ const sendConfirmationEmail = async (recipientEmail: string) => {
     await resend.emails.send({
       from: 'Guide2Umrah <noreply@guide2umrah.com>',
       to: recipientEmail,
-      subject: 'Welkom bij Guide2Umrah - Jouw Reis Begint Hier',
+      replyTo: 'support@guide2umrah.com',
+      subject: 'Welkom bij Guide2Umrah - Jouw Registratie is Bevestigd',
       html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -62,13 +63,11 @@ const sendConfirmationEmail = async (recipientEmail: string) => {
           </p>
           
           <p style="font-size: 16px; line-height: 1.6; color: #4B5563; margin-bottom: 20px;">
-            Bedankt voor je interesse in Guide2Umrah! We zijn momenteel hard bezig om het platform te perfectioneren 
-            zodat we je de best mogelijke ervaring kunnen bieden bij het plannen van je Umrah reis.
+            Bedankt voor je registratie bij Guide2Umrah. Wij zijn er om je te helpen bij het plannen van je spirituele reis.
           </p>
 
           <p style="font-size: 16px; line-height: 1.6; color: #4B5563; margin-bottom: 20px;">
-            Zodra we live gaan, ben jij een van de eersten die hiervan op de hoogte wordt gesteld. Je kunt dan 
-            direct gebruik maken van:
+            We zijn momenteel hard bezig om het platform te perfectioneren zodat we je de best mogelijke ervaring kunnen bieden bij het plannen van je Umrah reis.
           </p>
 
           <ul style="color: #4B5563; margin-bottom: 20px; padding-left: 20px;">
@@ -78,28 +77,25 @@ const sendConfirmationEmail = async (recipientEmail: string) => {
           </ul>
 
           <p style="font-size: 16px; line-height: 1.6; color: #4B5563; margin-bottom: 20px;">
-            We waarderen je geduld en vertrouwen in ons. InshaAllah kunnen we je snel meer nieuws brengen!
+            Heb je vragen? Aarzel dan niet om contact op te nemen met ons ondersteuningsteam.
           </p>
 
-          <div style="text-align: center; margin-top: 30px;">
-            <p style="font-size: 16px; line-height: 1.6; color: #4B5563;">
-              Met vriendelijke groet,<br>
-              Het Guide2Umrah Team
-            </p>
-          </div>
+          <p style="font-size: 16px; line-height: 1.6; color: #4B5563; margin-bottom: 20px;">
+            Met vriendelijke groet,<br/>
+            Het Guide2Umrah Team
+          </p>
         </div>
         
         <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #6B7280;">
-          <p> ${new Date().getFullYear()} Guide2Umrah - Alle rechten voorbehouden</p>
+          <p>Dit is een bevestigingsmail van Guide2Umrah. Voeg noreply@guide2umrah.com toe aan je veilige afzenders om toekomstige e-mails in je inbox te ontvangen.</p>
+          <p> ${new Date().getFullYear()} Guide2Umrah. Alle rechten voorbehouden.</p>
         </div>
-      </div>
-    `
+      </div>`,
     });
 
-    // Log the actual recipient email for development purposes
-    console.log(`Email sent to ${recipientEmail}`);
+    console.log(`Email verzonden naar ${recipientEmail}`);
   } catch (error) {
-    console.error('Error sending email:', {
+    console.error('Fout bij verzenden email:', {
       recipient: recipientEmail,
       error: error.message,
       details: error.response?.data || error

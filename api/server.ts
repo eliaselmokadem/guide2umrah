@@ -749,7 +749,7 @@ app.post('/api/custom-package', async (req, res) => {
       ${req.body.additionalStops.length ? `
         <p><strong>Extra bestemmingen:</strong></p>
         <ul>
-          ${req.body.additionalStops.map(stop => `<li>${stop}</li>`).join('')}
+          ${req.body.additionalStops.map((stop: string) => `<li>${stop}</li>`).join('')}
         </ul>
       ` : ''}
       <p><strong>Periode:</strong> ${req.body.startDate} tot ${req.body.endDate}</p>
@@ -759,7 +759,7 @@ app.post('/api/custom-package', async (req, res) => {
       ${req.body.additionalServices.length ? `
         <p><strong>Extra services:</strong></p>
         <ul>
-          ${req.body.additionalServices.map(service => `<li>${service}</li>`).join('')}
+          ${req.body.additionalServices.map((service: string) => `<li>${service}</li>`).join('')}
         </ul>
       ` : ''}
       ${req.body.specialRequests ? `

@@ -770,7 +770,7 @@ app.post('/api/custom-package', async (req, res) => {
 
     await resend.emails.send({
       from: 'Guide2Umrah <noreply@guide2umrah.com>',
-      to: ['info@guide2umrah.com'],
+      to: ['eliaselmok@gmail.com'],
       subject: 'Nieuwe Custom Umrah Pakket Aanvraag',
       html: emailHtml
     });

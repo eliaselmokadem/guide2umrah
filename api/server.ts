@@ -218,6 +218,45 @@ const backgroundImageSchema = new mongoose.Schema<IBackgroundImage>({
 
 const BackgroundImage = mongoose.model<IBackgroundImage>("BackgroundImage", backgroundImageSchema);
 
+// Custom Package schema and model
+interface ICustomPackage {
+  departureLocation: string;
+  destination: string;
+  additionalStops: string[];
+  startDate: string;
+  endDate: string;
+  numberOfPeople: number;
+  hotelPreference: string;
+  transportPreference: string;
+  additionalServices: string[];
+  specialRequests: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  createdAt: Date;
+}
+
+const customPackageSchema = new mongoose.Schema<ICustomPackage>({
+  departureLocation: { type: String, required: true },
+  destination: { type: String, required: true },
+  additionalStops: { type: [String], required: true },
+  startDate: { type: String, required: true },
+  endDate: { type: String, required: true },
+  numberOfPeople: { type: Number, required: true },
+  hotelPreference: { type: String, required: true },
+  transportPreference: { type: String, required: true },
+  additionalServices: { type: [String], required: true },
+  specialRequests: { type: String, required: true },
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  phone: { type: String, required: true },
+  status: { type: String, default: 'new' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const CustomPackage = mongoose.model<ICustomPackage>('CustomPackage', customPackageSchema);
+
 // User login
 app.post("/api/login", async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -690,6 +729,88 @@ app.post("/api/contact", async (req: Request, res: Response) => {
     res.status(500).json({ 
       error: "Er is een fout opgetreden bij het verzenden van uw bericht" 
     });
+  }
+});
+
+// Custom Package endpoint
+app.post('/api/custom-package', async (req, res) => {
+  try {
+    const customPackage = new CustomPackage(req.body);
+    await customPackage.save();
+
+    // Send email notification
+    const emailHtml = `
+      <h2>Nieuwe Aanvraag Custom Umrah Pakket</h2>
+      <p><strong>Naam:</strong> ${req.body.name}</p>
+      <p><strong>Email:</strong> ${req.body.email}</p>
+      <p><strong>Telefoon:</strong> ${req.body.phone}</p>
+      <p><strong>Vertrek vanaf:</strong> ${req.body.departureLocation}</p>
+      <p><strong>Bestemming:</strong> ${req.body.destination}</p>
+      ${req.body.additionalStops.length ? `
+        <p><strong>Extra bestemmingen:</strong></p>
+        <ul>
+          ${req.body.additionalStops.map(stop => `<li>${stop}</li>`).join('')}
+        </ul>
+      ` : ''}
+      <p><strong>Periode:</strong> ${req.body.startDate} tot ${req.body.endDate}</p>
+      <p><strong>Aantal personen:</strong> ${req.body.numberOfPeople}</p>
+      <p><strong>Hotel voorkeur:</strong> ${req.body.hotelPreference}</p>
+      <p><strong>Transport voorkeur:</strong> ${req.body.transportPreference}</p>
+      ${req.body.additionalServices.length ? `
+        <p><strong>Extra services:</strong></p>
+        <ul>
+          ${req.body.additionalServices.map(service => `<li>${service}</li>`).join('')}
+        </ul>
+      ` : ''}
+      ${req.body.specialRequests ? `
+        <p><strong>Speciale verzoeken:</strong></p>
+        <p>${req.body.specialRequests}</p>
+      ` : ''}
+    `;
+
+    await resend.emails.send({
+      from: 'Guide2Umrah <noreply@guide2umrah.com>',
+      to: ['info@guide2umrah.com'],
+      subject: 'Nieuwe Custom Umrah Pakket Aanvraag',
+      html: emailHtml
+    });
+
+    // Send confirmation email to customer
+    const confirmationHtml = `
+      <h2>Bedankt voor je aanvraag!</h2>
+      <p>Beste ${req.body.name},</p>
+      <p>We hebben je aanvraag voor een custom Umrah pakket ontvangen. We nemen zo snel mogelijk contact met je op om je wensen te bespreken.</p>
+      <h3>Je aanvraag details:</h3>
+      <p><strong>Vertrek vanaf:</strong> ${req.body.departureLocation}</p>
+      <p><strong>Bestemming:</strong> ${req.body.destination}</p>
+      <p><strong>Periode:</strong> ${req.body.startDate} tot ${req.body.endDate}</p>
+      <p><strong>Aantal personen:</strong> ${req.body.numberOfPeople}</p>
+      <br>
+      <p>Met vriendelijke groet,</p>
+      <p>Team Guide2Umrah</p>
+    `;
+
+    await resend.emails.send({
+      from: 'Guide2Umrah <noreply@guide2umrah.com>',
+      to: [req.body.email],
+      subject: 'Bevestiging van je Custom Umrah Pakket Aanvraag',
+      html: confirmationHtml
+    });
+
+    res.status(201).json({ message: 'Custom package request received successfully' });
+  } catch (error) {
+    console.error('Error creating custom package:', error);
+    res.status(500).json({ message: 'Error creating custom package request' });
+  }
+});
+
+app.get('/api/custom-packages', async (req, res) => {
+  try {
+    const customPackages = await CustomPackage.find().sort({ createdAt: -1 });
+    res.json(customPackages);
+  } catch (error) {
+    console.error('Error fetching custom packages:', error);
+    res.status(500).json({ message: 'Error fetching custom packages' });
   }
 });
 

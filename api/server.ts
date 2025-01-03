@@ -585,7 +585,7 @@ app.post("/api/contact", async (req: Request, res: Response) => {
     // Send email notification
     await resend.emails.send({
       from: 'Guide2Umrah <noreply@guide2umrah.com>',
-      to: 'eliaselmok@gmail.com',
+      to: 'anouarregragui@gmail.com',
       replyTo: email,
       subject: `Nieuw contactformulier: ${subject}`,
       html: `

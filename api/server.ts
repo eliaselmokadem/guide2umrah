@@ -91,15 +91,17 @@ const sendConfirmationEmail = async (recipientEmail: string) => {
           <p> ${new Date().getFullYear()} Guide2Umrah. Alle rechten voorbehouden.</p>
         </div>
       </div>
-    `,
+    `
     });
 
     console.log(`Email verzonden naar ${recipientEmail}`);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Fout bij verzenden email:', {
       recipient: recipientEmail,
-      error: error.message,
-      details: error.response?.data || error
+      error: error instanceof Error ? error.message : String(error),
+      details: error instanceof Error && 'response' in error 
+        ? (error as any).response?.data 
+        : undefined
     });
     throw error;
   }
@@ -113,7 +115,7 @@ const upload = multer({ storage });
 mongoose
   .connect(process.env.MONGO_URI as string)
   .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("Failed to connect to MongoDB", err));
+  .catch((err: unknown) => console.error("Failed to connect to MongoDB", err));
 
 // Helper to upload files to Cloudinary
 const uploadToCloudinary = (
@@ -124,10 +126,10 @@ const uploadToCloudinary = (
     const uploadStream = cloudinary.uploader.upload_stream(
       { folder },
       (error, result) => {
-        if (error) {
-          return reject(error);
+        if (error || !result) {
+          return reject(error || new Error('Upload failed'));
         }
-        resolve(result as UploadApiResponse);
+        resolve(result);
       }
     );
     uploadStream.end(fileBuffer);
@@ -218,8 +220,8 @@ app.post("/api/login", async (req: Request, res: Response) => {
     });
 
     res.json({ token });
-  } catch (error) {
-    console.error("Login error:", error);
+  } catch (error: unknown) {
+    console.error("Login error:", error instanceof Error ? error.message : String(error));
     res
       .status(500)
       .json({ message: "Er is iets misgegaan. Probeer het opnieuw." });
@@ -232,8 +234,8 @@ app.get("/api/packages", async (req: Request, res: Response) => {
   try {
     const packages = await Package.find();
     res.json(packages);
-  } catch (error) {
-    console.error("Fout bij het ophalen van pakketten:", error);
+  } catch (error: unknown) {
+    console.error("Fout bij het ophalen van pakketten:", error instanceof Error ? error.message : String(error));
     res.status(500).json({ message: "Er is iets misgegaan." });
   }
 });
@@ -246,8 +248,8 @@ app.get("/api/packages/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Pakket niet gevonden." });
     }
     res.json(packageData);
-  } catch (error) {
-    console.error("Error fetching package:", error);
+  } catch (error: unknown) {
+    console.error("Error fetching package:", error instanceof Error ? error.message : String(error));
     res.status(500).json({ message: "Error fetching package." });
   }
 });
@@ -281,8 +283,8 @@ app.post(
 
       await newPackage.save();
       res.status(201).json({ message: "Pakket succesvol toegevoegd!" });
-    } catch (error) {
-      console.error("Fout bij het toevoegen van pakket:", error);
+    } catch (error: unknown) {
+      console.error("Fout bij het toevoegen van pakket:", error instanceof Error ? error.message : String(error));
       res.status(500).json({ message: "Er is iets misgegaan." });
     }
   }
@@ -317,8 +319,8 @@ app.put(
         new: true,
       });
       res.status(200).json(updatedPackage);
-    } catch (error) {
-      console.error("Error updating package:", error);
+    } catch (error: unknown) {
+      console.error("Error updating package:", error instanceof Error ? error.message : String(error));
       res.status(500).json({ message: "Failed to update package." });
     }
   }
@@ -329,8 +331,8 @@ app.delete("/api/packages/:id", async (req: Request, res: Response) => {
   try {
     await Package.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Pakket succesvol verwijderd." });
-  } catch (error) {
-    console.error("Error deleting package:", error);
+  } catch (error: unknown) {
+    console.error("Error deleting package:", error instanceof Error ? error.message : String(error));
     res.status(500).json({ message: "Failed to delete package." });
   }
 });
@@ -341,8 +343,8 @@ app.get("/api/services", async (req: Request, res: Response) => {
   try {
     const services = await Service.find();
     res.json(services);
-  } catch (error) {
-    console.error("Fout bij het ophalen van services:", error);
+  } catch (error: unknown) {
+    console.error("Fout bij het ophalen van services:", error instanceof Error ? error.message : String(error));
     res.status(500).json({ message: "Er is iets misgegaan." });
   }
 });
@@ -355,8 +357,8 @@ app.get("/api/services/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Service niet gevonden." });
     }
     res.json(serviceData);
-  } catch (error) {
-    console.error("Error fetching service:", error);
+  } catch (error: unknown) {
+    console.error("Error fetching service:", error instanceof Error ? error.message : String(error));
     res.status(500).json({ message: "Error fetching service." });
   }
 });
@@ -389,8 +391,8 @@ app.post(
 
       await newService.save();
       res.status(201).json({ message: "Service succesvol toegevoegd!" });
-    } catch (error) {
-      console.error("Fout bij het toevoegen van service:", error);
+    } catch (error: unknown) {
+      console.error("Fout bij het toevoegen van service:", error instanceof Error ? error.message : String(error));
       res.status(500).json({ message: "Er is iets misgegaan." });
     }
   }
@@ -420,8 +422,8 @@ app.put(
         new: true,
       });
       res.status(200).json(updatedService);
-    } catch (error) {
-      console.error("Error updating service:", error);
+    } catch (error: unknown) {
+      console.error("Error updating service:", error instanceof Error ? error.message : String(error));
       res.status(500).json({ message: "Failed to update service." });
     }
   }
@@ -432,8 +434,8 @@ app.delete("/api/services/:id", async (req: Request, res: Response) => {
   try {
     await Service.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Service succesvol verwijderd." });
-  } catch (error) {
-    console.error("Error deleting service:", error);
+  } catch (error: unknown) {
+    console.error("Error deleting service:", error instanceof Error ? error.message : String(error));
     res.status(500).json({ message: "Failed to delete service." });
   }
 });
@@ -469,8 +471,8 @@ app.post("/api/background-image", upload.single("image"), async (req: Request, r
       data: backgroundImage
     });
 
-  } catch (error) {
-    console.error("Error updating background image:", error);
+  } catch (error: unknown) {
+    console.error("Error updating background image:", error instanceof Error ? error.message : String(error));
     res.status(500).json({ 
       success: false,
       message: "Er is een fout opgetreden bij het bijwerken van de achtergrondafbeelding." 
@@ -495,8 +497,8 @@ app.get("/api/background-image/:pageName", async (req: Request, res: Response) =
       data: backgroundImage
     });
 
-  } catch (error) {
-    console.error("Error fetching background image:", error);
+  } catch (error: unknown) {
+    console.error("Error fetching background image:", error instanceof Error ? error.message : String(error));
     res.status(500).json({ 
       success: false,
       message: "Er is een fout opgetreden bij het ophalen van de achtergrondafbeelding." 
@@ -566,8 +568,8 @@ app.post("/api/subscribe", async (req: Request, res: Response) => {
       message: "Bedankt voor je inschrijving! We hebben je een bevestigingsmail gestuurd. Als je het niet direct ontvangt, zit het in je spam folder." 
     });
 
-  } catch (error) {
-    console.error("Error in email subscription:", error);
+  } catch (error: unknown) {
+    console.error("Error in email subscription:", error instanceof Error ? error.message : String(error));
     return res.status(500).json({ 
       success: false, 
       message: "Er is iets misgegaan. Probeer het later opnieuw." 

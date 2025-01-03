@@ -152,17 +152,25 @@ const User = mongoose.model<IUser>("User", userSchema);
 // Package schema and model
 interface IPackage {
   name: string;
-  date: string;
   description: string;
-  price: number;
+  price: number | null;
+  isFree: boolean;
+  location: string;
+  startDate: string;
+  endDate: string;
+  numberOfRooms: number;
   photoPaths: string[];
 }
 
 const packageSchema = new mongoose.Schema<IPackage>({
   name: { type: String, required: true },
-  date: { type: String, required: true },
   description: { type: String, required: true },
-  price: { type: Number, required: true },
+  price: { type: Number, required: false, default: null },
+  isFree: { type: Boolean, required: true, default: false },
+  location: { type: String, required: true },
+  startDate: { type: String, required: true },
+  endDate: { type: String, required: true },
+  numberOfRooms: { type: Number, required: true },
   photoPaths: { type: [String], required: true },
 });
 
@@ -172,14 +180,24 @@ const Package = mongoose.model<IPackage>("Package", packageSchema);
 interface IService {
   name: string;
   description: string;
-  price: number;
+  price: number | null;
+  isFree: boolean;
+  location: string;
+  startDate: string;
+  endDate: string;
+  numberOfRooms: number;
   photoPaths: string[];
 }
 
 const serviceSchema = new mongoose.Schema<IService>({
   name: { type: String, required: true },
   description: { type: String, required: true },
-  price: { type: Number, required: true },
+  price: { type: Number, required: false, default: null },
+  isFree: { type: Boolean, required: true, default: false },
+  location: { type: String, required: true },
+  startDate: { type: String, required: true },
+  endDate: { type: String, required: true },
+  numberOfRooms: { type: Number, required: true },
   photoPaths: { type: [String], required: true },
 });
 
@@ -260,7 +278,7 @@ app.post(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     try {
-      const { name, date, description, price } = req.body;
+      const { name, description, price, isFree, location, startDate, endDate, numberOfRooms } = req.body;
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
         return res.status(400).json({ message: "Foto's zijn vereist." });
@@ -275,9 +293,13 @@ app.post(
 
       const newPackage = new Package({
         name,
-        date,
         description,
         price: parseFloat(price),
+        isFree,
+        location,
+        startDate,
+        endDate,
+        numberOfRooms,
         photoPaths,
       });
 
@@ -296,14 +318,18 @@ app.put(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, date, description, price } = req.body;
+    const { name, description, price, isFree, location, startDate, endDate, numberOfRooms } = req.body;
 
     try {
       const updateData: any = {
         name,
-        date,
         description,
         price: parseFloat(price),
+        isFree,
+        location,
+        startDate,
+        endDate,
+        numberOfRooms,
       };
 
       if (req.files && (req.files as Express.Multer.File[]).length > 0) {
@@ -369,7 +395,7 @@ app.post(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     try {
-      const { name, description, price } = req.body;
+      const { name, description, price, isFree, location, startDate, endDate, numberOfRooms } = req.body;
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
         return res.status(400).json({ message: "Foto's zijn vereist." });
@@ -386,6 +412,11 @@ app.post(
         name,
         description,
         price: parseFloat(price),
+        isFree,
+        location,
+        startDate,
+        endDate,
+        numberOfRooms,
         photoPaths,
       });
 
@@ -404,10 +435,19 @@ app.put(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, description, price } = req.body;
+    const { name, description, price, isFree, location, startDate, endDate, numberOfRooms } = req.body;
 
     try {
-      const updateData: any = { name, description, price: parseFloat(price) };
+      const updateData: any = {
+        name,
+        description,
+        price: parseFloat(price),
+        isFree,
+        location,
+        startDate,
+        endDate,
+        numberOfRooms,
+      };
 
       if (req.files && (req.files as Express.Multer.File[]).length > 0) {
         const photoResults = await Promise.all(

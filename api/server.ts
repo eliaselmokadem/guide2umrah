@@ -90,7 +90,8 @@ const sendConfirmationEmail = async (recipientEmail: string) => {
           <p>Dit is een bevestigingsmail van Guide2Umrah. Voeg noreply@guide2umrah.com toe aan je veilige afzenders om toekomstige e-mails in je inbox te ontvangen.</p>
           <p> ${new Date().getFullYear()} Guide2Umrah. Alle rechten voorbehouden.</p>
         </div>
-      </div>`,
+      </div>
+    `,
     });
 
     console.log(`Email verzonden naar ${recipientEmail}`);
@@ -181,6 +182,21 @@ const serviceSchema = new mongoose.Schema<IService>({
 });
 
 const Service = mongoose.model<IService>("Service", serviceSchema);
+
+// Background Image schema and model
+interface IBackgroundImage {
+  pageName: string;
+  imageUrl: string;
+  updatedAt: Date;
+}
+
+const backgroundImageSchema = new mongoose.Schema<IBackgroundImage>({
+  pageName: { type: String, required: true, unique: true },
+  imageUrl: { type: String, required: true },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const BackgroundImage = mongoose.model<IBackgroundImage>("BackgroundImage", backgroundImageSchema);
 
 // User login
 app.post("/api/login", async (req: Request, res: Response) => {
@@ -419,6 +435,72 @@ app.delete("/api/services/:id", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error deleting service:", error);
     res.status(500).json({ message: "Failed to delete service." });
+  }
+});
+
+// Background Image endpoints
+app.post("/api/background-image", upload.single("image"), async (req: Request, res: Response) => {
+  try {
+    const { pageName } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Afbeelding is vereist." });
+    }
+
+    if (!pageName) {
+      return res.status(400).json({ message: "Pagina naam is vereist." });
+    }
+
+    // Upload image to Cloudinary
+    const result = await uploadToCloudinary(req.file.buffer, "backgrounds");
+
+    // Update or create background image record
+    const backgroundImage = await BackgroundImage.findOneAndUpdate(
+      { pageName },
+      { 
+        imageUrl: result.secure_url,
+        updatedAt: new Date()
+      },
+      { upsert: true, new: true }
+    );
+
+    res.json({
+      success: true,
+      data: backgroundImage
+    });
+
+  } catch (error) {
+    console.error("Error updating background image:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Er is een fout opgetreden bij het bijwerken van de achtergrondafbeelding." 
+    });
+  }
+});
+
+app.get("/api/background-image/:pageName", async (req: Request, res: Response) => {
+  try {
+    const { pageName } = req.params;
+    const backgroundImage = await BackgroundImage.findOne({ pageName });
+    
+    if (!backgroundImage) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Geen achtergrondafbeelding gevonden voor deze pagina." 
+      });
+    }
+
+    res.json({
+      success: true,
+      data: backgroundImage
+    });
+
+  } catch (error) {
+    console.error("Error fetching background image:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Er is een fout opgetreden bij het ophalen van de achtergrondafbeelding." 
+    });
   }
 });
 

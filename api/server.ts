@@ -577,6 +577,82 @@ app.post("/api/subscribe", async (req: Request, res: Response) => {
   }
 });
 
+// Contact form endpoint
+app.post("/api/contact", async (req: Request, res: Response) => {
+  try {
+    const { name, email, phone, subject, message } = req.body;
+
+    // Send email notification
+    await resend.emails.send({
+      from: 'Guide2Umrah <noreply@guide2umrah.com>',
+      to: 'eliaselmok@gmail.com',
+      replyTo: email,
+      subject: `Nieuw contactformulier: ${subject}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #10B981;">Nieuw Contact Formulier Bericht</h2>
+          
+          <div style="margin: 20px 0;">
+            <p><strong>Naam:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Telefoon:</strong> ${phone || 'Niet opgegeven'}</p>
+            <p><strong>Onderwerp:</strong> ${subject}</p>
+          </div>
+
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px;">
+            <h3 style="margin-top: 0;">Bericht:</h3>
+            <p style="white-space: pre-wrap;">${message}</p>
+          </div>
+        </div>
+      `
+    });
+
+    // Send confirmation email to user
+    await resend.emails.send({
+      from: 'Guide2Umrah <noreply@guide2umrah.com>',
+      to: email,
+      replyTo: 'info@guide2umrah.com',
+      subject: 'Bedankt voor uw bericht - Guide2Umrah',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+          <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color: #10B981; margin-bottom: 20px;">Bedankt voor uw bericht!</h2>
+            
+            <p style="font-size: 16px; line-height: 1.6; color: #4B5563; margin-bottom: 20px;">
+              Beste ${name},
+            </p>
+            
+            <p style="font-size: 16px; line-height: 1.6; color: #4B5563; margin-bottom: 20px;">
+              We hebben uw bericht ontvangen en zullen zo spoedig mogelijk contact met u opnemen.
+            </p>
+
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #4B5563;">Uw bericht:</h3>
+              <p style="color: #4B5563;">${subject}</p>
+            </div>
+
+            <p style="font-size: 16px; line-height: 1.6; color: #4B5563;">
+              Met vriendelijke groet,<br/>
+              Het Guide2Umrah Team
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #6B7280;">
+            <p>${new Date().getFullYear()} Guide2Umrah. Alle rechten voorbehouden.</p>
+          </div>
+        </div>
+      `
+    });
+
+    res.status(200).json({ message: "Bericht succesvol verzonden" });
+  } catch (error: unknown) {
+    console.error('Error sending contact form:', error);
+    res.status(500).json({ 
+      error: "Er is een fout opgetreden bij het verzenden van uw bericht" 
+    });
+  }
+});
+
 // Start the server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

@@ -160,6 +160,13 @@ interface IPackage {
   endDate: string;
   numberOfRooms: number;
   photoPaths: string[];
+  roomTypes: {
+    singleRoom: { available: boolean; quantity: number; price: number };
+    doubleRoom: { available: boolean; quantity: number; price: number };
+    tripleRoom: { available: boolean; quantity: number; price: number };
+    quadRoom: { available: boolean; quantity: number; price: number };
+    customRoom: { available: boolean; quantity: number; capacity: number; price: number };
+  };
 }
 
 const packageSchema = new mongoose.Schema<IPackage>({
@@ -172,6 +179,34 @@ const packageSchema = new mongoose.Schema<IPackage>({
   endDate: { type: String, required: true },
   numberOfRooms: { type: Number, required: true },
   photoPaths: { type: [String], required: true },
+  roomTypes: {
+    singleRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    },
+    doubleRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    },
+    tripleRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    },
+    quadRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    },
+    customRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      capacity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    }
+  }
 });
 
 const Package = mongoose.model<IPackage>("Package", packageSchema);
@@ -187,6 +222,13 @@ interface IService {
   endDate: string;
   numberOfRooms: number;
   photoPaths: string[];
+  roomTypes: {
+    singleRoom: { available: boolean; quantity: number; price: number };
+    doubleRoom: { available: boolean; quantity: number; price: number };
+    tripleRoom: { available: boolean; quantity: number; price: number };
+    quadRoom: { available: boolean; quantity: number; price: number };
+    customRoom: { available: boolean; quantity: number; capacity: number; price: number };
+  };
 }
 
 const serviceSchema = new mongoose.Schema<IService>({
@@ -199,6 +241,34 @@ const serviceSchema = new mongoose.Schema<IService>({
   endDate: { type: String, required: true },
   numberOfRooms: { type: Number, required: true },
   photoPaths: { type: [String], required: true },
+  roomTypes: {
+    singleRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    },
+    doubleRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    },
+    tripleRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    },
+    quadRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    },
+    customRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      capacity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    }
+  }
 });
 
 const Service = mongoose.model<IService>("Service", serviceSchema);
@@ -317,7 +387,7 @@ app.post(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     try {
-      const { name, description, price, isFree, location, startDate, endDate, numberOfRooms } = req.body;
+      const { name, description, price, isFree, location, startDate, endDate, numberOfRooms, roomTypes } = req.body;
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
         return res.status(400).json({ message: "Foto's zijn vereist." });
@@ -340,6 +410,7 @@ app.post(
         endDate,
         numberOfRooms,
         photoPaths,
+        roomTypes
       });
 
       await newPackage.save();
@@ -357,7 +428,7 @@ app.put(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, description, price, isFree, location, startDate, endDate, numberOfRooms } = req.body;
+    const { name, description, price, isFree, location, startDate, endDate, numberOfRooms, roomTypes } = req.body;
 
     try {
       const updateData: any = {
@@ -369,6 +440,7 @@ app.put(
         startDate,
         endDate,
         numberOfRooms,
+        roomTypes
       };
 
       if (req.files && (req.files as Express.Multer.File[]).length > 0) {
@@ -434,7 +506,7 @@ app.post(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     try {
-      const { name, description, price, isFree, location, startDate, endDate, numberOfRooms } = req.body;
+      const { name, description, price, isFree, location, startDate, endDate, numberOfRooms, roomTypes } = req.body;
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
         return res.status(400).json({ message: "Foto's zijn vereist." });
@@ -457,6 +529,7 @@ app.post(
         endDate,
         numberOfRooms,
         photoPaths,
+        roomTypes
       });
 
       await newService.save();
@@ -474,7 +547,7 @@ app.put(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, description, price, isFree, location, startDate, endDate, numberOfRooms } = req.body;
+    const { name, description, price, isFree, location, startDate, endDate, numberOfRooms, roomTypes } = req.body;
 
     try {
       const updateData: any = {
@@ -486,6 +559,7 @@ app.put(
         startDate,
         endDate,
         numberOfRooms,
+        roomTypes
       };
 
       if (req.files && (req.files as Express.Multer.File[]).length > 0) {

@@ -216,51 +216,18 @@ interface IService {
   startDate: string;
   endDate: string;
   photoPaths: string[];
-  roomTypes: {
-    singleRoom: { available: boolean; quantity: number; price: number };
-    doubleRoom: { available: boolean; quantity: number; price: number };
-    tripleRoom: { available: boolean; quantity: number; price: number };
-    quadRoom: { available: boolean; quantity: number; price: number };
-    customRoom: { available: boolean; quantity: number; capacity: number; price: number };
-  };
+  price: number;
 }
 
 const serviceSchema = new mongoose.Schema<IService>({
   name: { type: String, required: true },
   description: { type: String, required: true },
-  isFree: { type: Boolean, required: true, default: false },
+  isFree: { type: Boolean, default: false },
   location: { type: String, required: true },
   startDate: { type: String, required: true },
   endDate: { type: String, required: true },
   photoPaths: { type: [String], required: true },
-  roomTypes: {
-    singleRoom: {
-      available: { type: Boolean, default: false },
-      quantity: { type: Number, default: 0 },
-      price: { type: Number, default: 0 }
-    },
-    doubleRoom: {
-      available: { type: Boolean, default: false },
-      quantity: { type: Number, default: 0 },
-      price: { type: Number, default: 0 }
-    },
-    tripleRoom: {
-      available: { type: Boolean, default: false },
-      quantity: { type: Number, default: 0 },
-      price: { type: Number, default: 0 }
-    },
-    quadRoom: {
-      available: { type: Boolean, default: false },
-      quantity: { type: Number, default: 0 },
-      price: { type: Number, default: 0 }
-    },
-    customRoom: {
-      available: { type: Boolean, default: false },
-      quantity: { type: Number, default: 0 },
-      capacity: { type: Number, default: 0 },
-      price: { type: Number, default: 0 }
-    }
-  }
+  price: { type: Number, default: 0 }
 });
 
 const Service = mongoose.model<IService>("Service", serviceSchema);
@@ -514,10 +481,10 @@ app.post(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     try {
-      const { name, description, isFree, location, startDate, endDate, roomTypes } = req.body;
+      const { name, description, isFree, location, startDate, endDate, price } = req.body;
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
-        return res.status(400).json({ message: "Foto's zijn vereist." });
+        return res.status(400).json({ message: "Photos are required." });
       }
 
       const photoResults = await Promise.all(
@@ -530,19 +497,19 @@ app.post(
       const newService = new Service({
         name,
         description,
-        isFree,
+        isFree: isFree === "true",
         location,
         startDate,
         endDate,
         photoPaths,
-        roomTypes
+        price
       });
 
       await newService.save();
-      res.status(201).json({ message: "Service succesvol toegevoegd!" });
+      res.status(201).json(newService);
     } catch (error: unknown) {
-      console.error("Fout bij het toevoegen van service:", error instanceof Error ? error.message : String(error));
-      res.status(500).json({ message: "Er is iets misgegaan." });
+      console.error("Error creating service:", error instanceof Error ? error.message : String(error));
+      res.status(500).json({ message: "Failed to create service." });
     }
   }
 );
@@ -553,17 +520,17 @@ app.put(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, description, isFree, location, startDate, endDate, roomTypes } = req.body;
-
+    const { name, description, isFree, location, startDate, endDate, price } = req.body;
+    
     try {
       const updateData: any = {
         name,
         description,
-        isFree,
+        isFree: isFree === "true",
         location,
         startDate,
         endDate,
-        roomTypes
+        price
       };
 
       if (req.files && (req.files as Express.Multer.File[]).length > 0) {
@@ -578,6 +545,11 @@ app.put(
       const updatedService = await Service.findByIdAndUpdate(id, updateData, {
         new: true,
       });
+      
+      if (!updatedService) {
+        return res.status(404).json({ message: "Service not found" });
+      }
+      
       res.status(200).json(updatedService);
     } catch (error: unknown) {
       console.error("Error updating service:", error instanceof Error ? error.message : String(error));

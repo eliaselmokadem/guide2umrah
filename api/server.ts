@@ -153,12 +153,10 @@ const User = mongoose.model<IUser>("User", userSchema);
 interface IPackage {
   name: string;
   description: string;
-  price: number | null;
   isFree: boolean;
   location: string;
   startDate: string;
   endDate: string;
-  numberOfRooms: number;
   photoPaths: string[];
   roomTypes: {
     singleRoom: { available: boolean; quantity: number; price: number };
@@ -172,12 +170,10 @@ interface IPackage {
 const packageSchema = new mongoose.Schema<IPackage>({
   name: { type: String, required: true },
   description: { type: String, required: true },
-  price: { type: Number, required: false, default: null },
   isFree: { type: Boolean, required: true, default: false },
   location: { type: String, required: true },
   startDate: { type: String, required: true },
   endDate: { type: String, required: true },
-  numberOfRooms: { type: Number, required: true },
   photoPaths: { type: [String], required: true },
   roomTypes: {
     singleRoom: {
@@ -215,12 +211,10 @@ const Package = mongoose.model<IPackage>("Package", packageSchema);
 interface IService {
   name: string;
   description: string;
-  price: number | null;
   isFree: boolean;
   location: string;
   startDate: string;
   endDate: string;
-  numberOfRooms: number;
   photoPaths: string[];
   roomTypes: {
     singleRoom: { available: boolean; quantity: number; price: number };
@@ -234,12 +228,10 @@ interface IService {
 const serviceSchema = new mongoose.Schema<IService>({
   name: { type: String, required: true },
   description: { type: String, required: true },
-  price: { type: Number, required: false, default: null },
   isFree: { type: Boolean, required: true, default: false },
   location: { type: String, required: true },
   startDate: { type: String, required: true },
   endDate: { type: String, required: true },
-  numberOfRooms: { type: Number, required: true },
   photoPaths: { type: [String], required: true },
   roomTypes: {
     singleRoom: {
@@ -387,7 +379,7 @@ app.post(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     try {
-      const { name, description, price, isFree, location, startDate, endDate, numberOfRooms, roomTypes } = req.body;
+      const { name, description, isFree, location, startDate, endDate, roomTypes } = req.body;
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
         return res.status(400).json({ message: "Foto's zijn vereist." });
@@ -403,12 +395,10 @@ app.post(
       const newPackage = new Package({
         name,
         description,
-        price: parseFloat(price),
         isFree,
         location,
         startDate,
         endDate,
-        numberOfRooms,
         photoPaths,
         roomTypes
       });
@@ -428,18 +418,16 @@ app.put(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, description, price, isFree, location, startDate, endDate, numberOfRooms, roomTypes } = req.body;
+    const { name, description, isFree, location, startDate, endDate, roomTypes } = req.body;
 
     try {
       const updateData: any = {
         name,
         description,
-        price: parseFloat(price),
         isFree,
         location,
         startDate,
         endDate,
-        numberOfRooms,
         roomTypes
       };
 
@@ -506,7 +494,7 @@ app.post(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     try {
-      const { name, description, price, isFree, location, startDate, endDate, numberOfRooms, roomTypes } = req.body;
+      const { name, description, isFree, location, startDate, endDate, roomTypes } = req.body;
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
         return res.status(400).json({ message: "Foto's zijn vereist." });
@@ -522,12 +510,10 @@ app.post(
       const newService = new Service({
         name,
         description,
-        price: parseFloat(price),
         isFree,
         location,
         startDate,
         endDate,
-        numberOfRooms,
         photoPaths,
         roomTypes
       });
@@ -547,18 +533,16 @@ app.put(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, description, price, isFree, location, startDate, endDate, numberOfRooms, roomTypes } = req.body;
+    const { name, description, isFree, location, startDate, endDate, roomTypes } = req.body;
 
     try {
       const updateData: any = {
         name,
         description,
-        price: parseFloat(price),
         isFree,
         location,
         startDate,
         endDate,
-        numberOfRooms,
         roomTypes
       };
 

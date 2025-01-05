@@ -379,10 +379,17 @@ app.post(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     try {
-      const { name, description, isFree, location, startDate, endDate, roomTypes } = req.body;
+      const { name, description, isFree, location, startDate, endDate } = req.body;
+      let roomTypes;
+      try {
+        roomTypes = JSON.parse(req.body.roomTypes);
+      } catch (e) {
+        console.error("Error parsing roomTypes:", e);
+        return res.status(400).json({ message: "Invalid roomTypes data" });
+      }
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
-        return res.status(400).json({ message: "Foto's zijn vereist." });
+        return res.status(400).json({ message: "Photos are required." });
       }
 
       const photoResults = await Promise.all(
@@ -395,7 +402,7 @@ app.post(
       const newPackage = new Package({
         name,
         description,
-        isFree,
+        isFree: isFree === "true",
         location,
         startDate,
         endDate,
@@ -404,10 +411,10 @@ app.post(
       });
 
       await newPackage.save();
-      res.status(201).json({ message: "Pakket succesvol toegevoegd!" });
+      res.status(201).json(newPackage);
     } catch (error: unknown) {
-      console.error("Fout bij het toevoegen van pakket:", error instanceof Error ? error.message : String(error));
-      res.status(500).json({ message: "Er is iets misgegaan." });
+      console.error("Error creating package:", error instanceof Error ? error.message : String(error));
+      res.status(500).json({ message: "Failed to create package." });
     }
   }
 );
@@ -418,13 +425,21 @@ app.put(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, description, isFree, location, startDate, endDate, roomTypes } = req.body;
-
+    const { name, description, isFree, location, startDate, endDate } = req.body;
+    
     try {
+      let roomTypes;
+      try {
+        roomTypes = JSON.parse(req.body.roomTypes);
+      } catch (e) {
+        console.error("Error parsing roomTypes:", e);
+        return res.status(400).json({ message: "Invalid roomTypes data" });
+      }
+
       const updateData: any = {
         name,
         description,
-        isFree,
+        isFree: isFree === "true",
         location,
         startDate,
         endDate,
@@ -443,6 +458,11 @@ app.put(
       const updatedPackage = await Package.findByIdAndUpdate(id, updateData, {
         new: true,
       });
+      
+      if (!updatedPackage) {
+        return res.status(404).json({ message: "Package not found" });
+      }
+      
       res.status(200).json(updatedPackage);
     } catch (error: unknown) {
       console.error("Error updating package:", error instanceof Error ? error.message : String(error));

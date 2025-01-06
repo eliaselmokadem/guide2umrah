@@ -150,74 +150,59 @@ const userSchema = new mongoose.Schema<IUser>({
 const User = mongoose.model<IUser>("User", userSchema);
 
 // Package schema and model
-interface RoomType {
-  available: boolean;
-  quantity: number;
-  price: number;
-  capacity?: number;
-}
-
-interface RoomTypes {
-  singleRoom: RoomType;
-  doubleRoom: RoomType;
-  tripleRoom: RoomType;
-  quadRoom: RoomType;
-  customRoom: RoomType & { capacity: number };
-}
-
-interface Destination {
-  location: string;
-  startDate: string;
-  endDate: string;
-  photoPaths: string[];
-  roomTypes: RoomTypes;
-}
-
 interface IPackage {
   name: string;
   description: string;
   isFree: boolean;
-  destinations: Destination[];
+  location: string;
+  startDate: string;
+  endDate: string;
+  photoPaths: string[];
+  roomTypes: {
+    singleRoom: { available: boolean; quantity: number; price: number };
+    doubleRoom: { available: boolean; quantity: number; price: number };
+    tripleRoom: { available: boolean; quantity: number; price: number };
+    quadRoom: { available: boolean; quantity: number; price: number };
+    customRoom: { available: boolean; quantity: number; capacity: number; price: number };
+  };
 }
 
 const packageSchema = new mongoose.Schema<IPackage>({
   name: { type: String, required: true },
   description: { type: String, required: true },
   isFree: { type: Boolean, required: true, default: false },
-  destinations: [{
-    location: { type: String, required: true },
-    startDate: { type: String, required: true },
-    endDate: { type: String, required: true },
-    photoPaths: { type: [String], required: true },
-    roomTypes: {
-      singleRoom: {
-        available: { type: Boolean, default: false },
-        quantity: { type: Number, default: 0 },
-        price: { type: Number, default: 0 }
-      },
-      doubleRoom: {
-        available: { type: Boolean, default: false },
-        quantity: { type: Number, default: 0 },
-        price: { type: Number, default: 0 }
-      },
-      tripleRoom: {
-        available: { type: Boolean, default: false },
-        quantity: { type: Number, default: 0 },
-        price: { type: Number, default: 0 }
-      },
-      quadRoom: {
-        available: { type: Boolean, default: false },
-        quantity: { type: Number, default: 0 },
-        price: { type: Number, default: 0 }
-      },
-      customRoom: {
-        available: { type: Boolean, default: false },
-        quantity: { type: Number, default: 0 },
-        capacity: { type: Number, default: 0 },
-        price: { type: Number, default: 0 }
-      }
+  location: { type: String, required: true },
+  startDate: { type: String, required: true },
+  endDate: { type: String, required: true },
+  photoPaths: { type: [String], required: true },
+  roomTypes: {
+    singleRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    },
+    doubleRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    },
+    tripleRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    },
+    quadRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
+    },
+    customRoom: {
+      available: { type: Boolean, default: false },
+      quantity: { type: Number, default: 0 },
+      capacity: { type: Number, default: 0 },
+      price: { type: Number, default: 0 }
     }
-  }]
+  }
 });
 
 const Package = mongoose.model<IPackage>("Package", packageSchema);
@@ -301,31 +286,6 @@ const customPackageSchema = new mongoose.Schema<ICustomPackage>({
 
 const CustomPackage = mongoose.model<ICustomPackage>('CustomPackage', customPackageSchema);
 
-// Authentication middleware
-const authenticateToken = async (req: Request, res: Response, next: Function) => {
-  try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-      return res.status(401).json({ message: 'Authentication required' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
-    const user = await User.findById(decoded.userId);
-
-    if (!user) {
-      return res.status(401).json({ message: 'User not found' });
-    }
-
-    (req as any).user = user;
-    next();
-  } catch (error) {
-    console.error('Auth error:', error);
-    return res.status(401).json({ message: 'Invalid token' });
-  }
-};
-
 // User login
 app.post("/api/login", async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -356,7 +316,7 @@ app.post("/api/login", async (req: Request, res: Response) => {
 
 // **Packages CRUD**
 // GET all packages
-app.get("/api/packages", authenticateToken, async (req: Request, res: Response) => {
+app.get("/api/packages", async (req: Request, res: Response) => {
   try {
     const packages = await Package.find();
     res.json(packages);
@@ -367,7 +327,7 @@ app.get("/api/packages", authenticateToken, async (req: Request, res: Response) 
 });
 
 // GET single package by ID
-app.get("/api/packages/:id", authenticateToken, async (req: Request, res: Response) => {
+app.get("/api/packages/:id", async (req: Request, res: Response) => {
   try {
     const packageData = await Package.findById(req.params.id);
     if (!packageData) {
@@ -383,77 +343,45 @@ app.get("/api/packages/:id", authenticateToken, async (req: Request, res: Respon
 // POST create a new package
 app.post(
   "/api/packages",
-  authenticateToken,
-  upload.array("photos", 50),
+  upload.array("photos", 10),
   async (req: Request, res: Response) => {
     try {
-      const { name, description, isFree } = req.body;
-      
-      if (!name || !description) {
-        return res.status(400).json({ message: "Name and description are required" });
-      }
-
-      let destinations: {
-        location: string;
-        startDate: string;
-        endDate: string;
-        roomTypes: RoomTypes;
-      }[];
-
+      const { name, description, isFree, location, startDate, endDate } = req.body;
+      let roomTypes;
       try {
-        destinations = JSON.parse(req.body.destinations);
-        
-        // Validate destinations
-        if (!Array.isArray(destinations) || destinations.length === 0) {
-          return res.status(400).json({ message: "At least one destination is required" });
-        }
-
-        // Validate each destination
-        for (const dest of destinations) {
-          if (!dest.location || !dest.startDate || !dest.endDate || !dest.roomTypes) {
-            return res.status(400).json({ message: "Invalid destination data" });
-          }
-        }
+        roomTypes = JSON.parse(req.body.roomTypes);
       } catch (e) {
-        console.error("Error parsing destinations:", e);
-        return res.status(400).json({ message: "Invalid destinations data" });
+        console.error("Error parsing roomTypes:", e);
+        return res.status(400).json({ message: "Invalid roomTypes data" });
       }
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
-        return res.status(400).json({ message: "Photos are required" });
+        return res.status(400).json({ message: "Photos are required." });
       }
 
-      const files = req.files as Express.Multer.File[];
       const photoResults = await Promise.all(
-        files.map(file => uploadToCloudinary(file.buffer, "umrah-packages"))
+        (req.files as Express.Multer.File[]).map((file) =>
+          uploadToCloudinary(file.buffer, "umrah-packages")
+        )
       );
-
-      const photoPaths = photoResults.map(result => result.secure_url);
-      const photosPerDestination = Math.floor(photoPaths.length / destinations.length);
-
-      const destinationsWithPhotos: Destination[] = destinations.map((destination, index) => ({
-        location: destination.location,
-        startDate: destination.startDate,
-        endDate: destination.endDate,
-        photoPaths: photoPaths.slice(
-          index * photosPerDestination,
-          (index + 1) * photosPerDestination
-        ),
-        roomTypes: destination.roomTypes
-      }));
+      const photoPaths = photoResults.map((result) => result.secure_url);
 
       const newPackage = new Package({
         name,
         description,
         isFree: isFree === "true",
-        destinations: destinationsWithPhotos
+        location,
+        startDate,
+        endDate,
+        photoPaths,
+        roomTypes
       });
 
       await newPackage.save();
       res.status(201).json(newPackage);
     } catch (error: unknown) {
       console.error("Error creating package:", error instanceof Error ? error.message : String(error));
-      res.status(500).json({ message: "Failed to create package" });
+      res.status(500).json({ message: "Failed to create package." });
     }
   }
 );
@@ -461,62 +389,37 @@ app.post(
 // PUT update a package
 app.put(
   "/api/packages/:id",
-  authenticateToken,
-  upload.array("photos", 50),
+  upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, description, isFree } = req.body;
+    const { name, description, isFree, location, startDate, endDate } = req.body;
     
     try {
-      let destinations: {
-        location: string;
-        startDate: string;
-        endDate: string;
-        roomTypes: RoomTypes;
-      }[];
+      let roomTypes;
       try {
-        destinations = JSON.parse(req.body.destinations);
+        roomTypes = JSON.parse(req.body.roomTypes);
       } catch (e) {
-        console.error("Error parsing destinations:", e);
-        return res.status(400).json({ message: "Invalid destinations data" });
+        console.error("Error parsing roomTypes:", e);
+        return res.status(400).json({ message: "Invalid roomTypes data" });
       }
 
-      const updateData: {
-        name: string;
-        description: string;
-        isFree: boolean;
-        destinations: Destination[];
-      } = {
+      const updateData: any = {
         name,
         description,
         isFree: isFree === "true",
-        destinations: destinations.map(destination => ({
-          location: destination.location,
-          startDate: destination.startDate,
-          endDate: destination.endDate,
-          photoPaths: [],
-          roomTypes: destination.roomTypes
-        }))
+        location,
+        startDate,
+        endDate,
+        roomTypes
       };
 
       if (req.files && (req.files as Express.Multer.File[]).length > 0) {
-        const files = req.files as Express.Multer.File[];
         const photoResults = await Promise.all(
-          files.map(file => uploadToCloudinary(file.buffer, "umrah-packages"))
+          (req.files as Express.Multer.File[]).map((file) =>
+            uploadToCloudinary(file.buffer, "umrah-packages")
+          )
         );
-        const photoPaths = photoResults.map(result => result.secure_url);
-        const photosPerDestination = Math.floor(photoPaths.length / destinations.length);
-
-        updateData.destinations = destinations.map((destination, index) => ({
-          location: destination.location,
-          startDate: destination.startDate,
-          endDate: destination.endDate,
-          photoPaths: photoPaths.slice(
-            index * photosPerDestination,
-            (index + 1) * photosPerDestination
-          ),
-          roomTypes: destination.roomTypes
-        }));
+        updateData.photoPaths = photoResults.map((result) => result.secure_url);
       }
 
       const updatedPackage = await Package.findByIdAndUpdate(id, updateData, {
@@ -536,7 +439,7 @@ app.put(
 );
 
 // DELETE a package
-app.delete("/api/packages/:id", authenticateToken, async (req: Request, res: Response) => {
+app.delete("/api/packages/:id", async (req: Request, res: Response) => {
   try {
     await Package.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Pakket succesvol verwijderd." });
@@ -548,7 +451,7 @@ app.delete("/api/packages/:id", authenticateToken, async (req: Request, res: Res
 
 // **Services CRUD**
 // GET all services
-app.get("/api/services", authenticateToken, async (req: Request, res: Response) => {
+app.get("/api/services", async (req: Request, res: Response) => {
   try {
     const services = await Service.find();
     res.json(services);
@@ -559,7 +462,7 @@ app.get("/api/services", authenticateToken, async (req: Request, res: Response) 
 });
 
 // GET single service by ID
-app.get("/api/services/:id", authenticateToken, async (req: Request, res: Response) => {
+app.get("/api/services/:id", async (req: Request, res: Response) => {
   try {
     const serviceData = await Service.findById(req.params.id);
     if (!serviceData) {
@@ -575,15 +478,10 @@ app.get("/api/services/:id", authenticateToken, async (req: Request, res: Respon
 // POST create a new service
 app.post(
   "/api/services",
-  authenticateToken,
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     try {
       const { name, description, isFree, location, startDate, endDate, price } = req.body;
-
-      if (!name || !description) {
-        return res.status(400).json({ message: "Name and description are required" });
-      }
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
         return res.status(400).json({ message: "Photos are required." });
@@ -619,7 +517,6 @@ app.post(
 // PUT update a service
 app.put(
   "/api/services/:id",
-  authenticateToken,
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -662,7 +559,7 @@ app.put(
 );
 
 // DELETE a service
-app.delete("/api/services/:id", authenticateToken, async (req: Request, res: Response) => {
+app.delete("/api/services/:id", async (req: Request, res: Response) => {
   try {
     await Service.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Service succesvol verwijderd." });
@@ -673,7 +570,7 @@ app.delete("/api/services/:id", authenticateToken, async (req: Request, res: Res
 });
 
 // Background Image endpoints
-app.post("/api/background-image", authenticateToken, upload.single("image"), async (req: Request, res: Response) => {
+app.post("/api/background-image", upload.single("image"), async (req: Request, res: Response) => {
   try {
     const { pageName } = req.body;
 
@@ -712,7 +609,7 @@ app.post("/api/background-image", authenticateToken, upload.single("image"), asy
   }
 });
 
-app.get("/api/background-image/:pageName", authenticateToken, async (req: Request, res: Response) => {
+app.get("/api/background-image/:pageName", async (req: Request, res: Response) => {
   try {
     const { pageName } = req.params;
     const backgroundImage = await BackgroundImage.findOne({ pageName });

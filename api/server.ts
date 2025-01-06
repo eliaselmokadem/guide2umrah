@@ -301,6 +301,31 @@ const customPackageSchema = new mongoose.Schema<ICustomPackage>({
 
 const CustomPackage = mongoose.model<ICustomPackage>('CustomPackage', customPackageSchema);
 
+// Authentication middleware
+const authenticateToken = async (req: Request, res: Response, next: Function) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    (req as any).user = user;
+    next();
+  } catch (error) {
+    console.error('Auth error:', error);
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+};
+
 // User login
 app.post("/api/login", async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -331,7 +356,7 @@ app.post("/api/login", async (req: Request, res: Response) => {
 
 // **Packages CRUD**
 // GET all packages
-app.get("/api/packages", async (req: Request, res: Response) => {
+app.get("/api/packages", authenticateToken, async (req: Request, res: Response) => {
   try {
     const packages = await Package.find();
     res.json(packages);
@@ -342,7 +367,7 @@ app.get("/api/packages", async (req: Request, res: Response) => {
 });
 
 // GET single package by ID
-app.get("/api/packages/:id", async (req: Request, res: Response) => {
+app.get("/api/packages/:id", authenticateToken, async (req: Request, res: Response) => {
   try {
     const packageData = await Package.findById(req.params.id);
     if (!packageData) {
@@ -358,10 +383,16 @@ app.get("/api/packages/:id", async (req: Request, res: Response) => {
 // POST create a new package
 app.post(
   "/api/packages",
-  upload.array("photos", 50), // Increased limit to handle multiple destinations
+  authenticateToken,
+  upload.array("photos", 50),
   async (req: Request, res: Response) => {
     try {
       const { name, description, isFree } = req.body;
+      
+      if (!name || !description) {
+        return res.status(400).json({ message: "Name and description are required" });
+      }
+
       let destinations: {
         location: string;
         startDate: string;
@@ -371,13 +402,25 @@ app.post(
 
       try {
         destinations = JSON.parse(req.body.destinations);
+        
+        // Validate destinations
+        if (!Array.isArray(destinations) || destinations.length === 0) {
+          return res.status(400).json({ message: "At least one destination is required" });
+        }
+
+        // Validate each destination
+        for (const dest of destinations) {
+          if (!dest.location || !dest.startDate || !dest.endDate || !dest.roomTypes) {
+            return res.status(400).json({ message: "Invalid destination data" });
+          }
+        }
       } catch (e) {
         console.error("Error parsing destinations:", e);
         return res.status(400).json({ message: "Invalid destinations data" });
       }
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
-        return res.status(400).json({ message: "Photos are required." });
+        return res.status(400).json({ message: "Photos are required" });
       }
 
       const files = req.files as Express.Multer.File[];
@@ -410,7 +453,7 @@ app.post(
       res.status(201).json(newPackage);
     } catch (error: unknown) {
       console.error("Error creating package:", error instanceof Error ? error.message : String(error));
-      res.status(500).json({ message: "Failed to create package." });
+      res.status(500).json({ message: "Failed to create package" });
     }
   }
 );
@@ -418,6 +461,7 @@ app.post(
 // PUT update a package
 app.put(
   "/api/packages/:id",
+  authenticateToken,
   upload.array("photos", 50),
   async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -492,7 +536,7 @@ app.put(
 );
 
 // DELETE a package
-app.delete("/api/packages/:id", async (req: Request, res: Response) => {
+app.delete("/api/packages/:id", authenticateToken, async (req: Request, res: Response) => {
   try {
     await Package.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Pakket succesvol verwijderd." });
@@ -504,7 +548,7 @@ app.delete("/api/packages/:id", async (req: Request, res: Response) => {
 
 // **Services CRUD**
 // GET all services
-app.get("/api/services", async (req: Request, res: Response) => {
+app.get("/api/services", authenticateToken, async (req: Request, res: Response) => {
   try {
     const services = await Service.find();
     res.json(services);
@@ -515,7 +559,7 @@ app.get("/api/services", async (req: Request, res: Response) => {
 });
 
 // GET single service by ID
-app.get("/api/services/:id", async (req: Request, res: Response) => {
+app.get("/api/services/:id", authenticateToken, async (req: Request, res: Response) => {
   try {
     const serviceData = await Service.findById(req.params.id);
     if (!serviceData) {
@@ -531,10 +575,15 @@ app.get("/api/services/:id", async (req: Request, res: Response) => {
 // POST create a new service
 app.post(
   "/api/services",
+  authenticateToken,
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     try {
       const { name, description, isFree, location, startDate, endDate, price } = req.body;
+
+      if (!name || !description) {
+        return res.status(400).json({ message: "Name and description are required" });
+      }
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
         return res.status(400).json({ message: "Photos are required." });
@@ -570,6 +619,7 @@ app.post(
 // PUT update a service
 app.put(
   "/api/services/:id",
+  authenticateToken,
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -612,7 +662,7 @@ app.put(
 );
 
 // DELETE a service
-app.delete("/api/services/:id", async (req: Request, res: Response) => {
+app.delete("/api/services/:id", authenticateToken, async (req: Request, res: Response) => {
   try {
     await Service.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Service succesvol verwijderd." });
@@ -623,7 +673,7 @@ app.delete("/api/services/:id", async (req: Request, res: Response) => {
 });
 
 // Background Image endpoints
-app.post("/api/background-image", upload.single("image"), async (req: Request, res: Response) => {
+app.post("/api/background-image", authenticateToken, upload.single("image"), async (req: Request, res: Response) => {
   try {
     const { pageName } = req.body;
 
@@ -662,7 +712,7 @@ app.post("/api/background-image", upload.single("image"), async (req: Request, r
   }
 });
 
-app.get("/api/background-image/:pageName", async (req: Request, res: Response) => {
+app.get("/api/background-image/:pageName", authenticateToken, async (req: Request, res: Response) => {
   try {
     const { pageName } = req.params;
     const backgroundImage = await BackgroundImage.findOne({ pageName });

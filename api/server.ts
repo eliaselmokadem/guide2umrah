@@ -417,35 +417,61 @@ app.post(
 // PUT update a package
 app.put(
   "/api/packages/:id",
-  upload.array("photos", 10),
+  upload.array("photos", 50), // Increased limit to handle multiple destinations
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, description, isFree, destinations } = req.body;
+    const { name, description, isFree } = req.body;
     
     try {
-      let roomTypes;
+      let destinations;
       try {
-        roomTypes = JSON.parse(req.body.roomTypes);
+        destinations = JSON.parse(req.body.destinations);
       } catch (e) {
-        console.error("Error parsing roomTypes:", e);
-        return res.status(400).json({ message: "Invalid roomTypes data" });
+        console.error("Error parsing destinations:", e);
+        return res.status(400).json({ message: "Invalid destinations data" });
       }
 
-      const updateData: any = {
+      const files = req.files as Express.Multer.File[];
+      let currentFileIndex = 0;
+      
+      // Process each destination and its photos
+      const processedDestinations = await Promise.all(
+        destinations.map(async (dest: any) => {
+          const numPhotos = dest.photoCount || 0;
+          const destinationFiles = files.slice(currentFileIndex, currentFileIndex + numPhotos);
+          currentFileIndex += numPhotos;
+
+          const photoResults = await Promise.all(
+            destinationFiles.map((file) =>
+              uploadToCloudinary(file.buffer, "umrah-packages")
+            )
+          );
+
+          // Parse the stringified roomTypes
+          let roomTypes;
+          try {
+            roomTypes = JSON.parse(dest.roomTypes);
+          } catch (e) {
+            console.error("Error parsing roomTypes:", e);
+            throw new Error("Invalid roomTypes data");
+          }
+
+          return {
+            location: dest.location,
+            startDate: dest.startDate,
+            endDate: dest.endDate,
+            photoPaths: photoResults.map((result) => result.secure_url),
+            roomTypes: roomTypes
+          };
+        })
+      );
+
+      const updateData = {
         name,
         description,
         isFree: isFree === "true",
-        destinations
+        destinations: processedDestinations
       };
-
-      if (req.files && (req.files as Express.Multer.File[]).length > 0) {
-        const photoResults = await Promise.all(
-          (req.files as Express.Multer.File[]).map((file) =>
-            uploadToCloudinary(file.buffer, "umrah-packages")
-          )
-        );
-        updateData.photoPaths = photoResults.map((result) => result.secure_url);
-      }
 
       const updatedPackage = await Package.findByIdAndUpdate(id, updateData, {
         new: true,

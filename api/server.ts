@@ -154,55 +154,59 @@ interface IPackage {
   name: string;
   description: string;
   isFree: boolean;
-  location: string;
-  startDate: string;
-  endDate: string;
-  photoPaths: string[];
-  roomTypes: {
-    singleRoom: { available: boolean; quantity: number; price: number };
-    doubleRoom: { available: boolean; quantity: number; price: number };
-    tripleRoom: { available: boolean; quantity: number; price: number };
-    quadRoom: { available: boolean; quantity: number; price: number };
-    customRoom: { available: boolean; quantity: number; capacity: number; price: number };
-  };
+  destinations: Array<{
+    location: string;
+    startDate: string;
+    endDate: string;
+    photoPaths: string[];
+    roomTypes: {
+      singleRoom: { available: boolean; quantity: number; price: number };
+      doubleRoom: { available: boolean; quantity: number; price: number };
+      tripleRoom: { available: boolean; quantity: number; price: number };
+      quadRoom: { available: boolean; quantity: number; price: number };
+      customRoom: { available: boolean; quantity: number; capacity: number; price: number };
+    };
+  }>;
 }
 
 const packageSchema = new mongoose.Schema<IPackage>({
   name: { type: String, required: true },
   description: { type: String, required: true },
   isFree: { type: Boolean, required: true, default: false },
-  location: { type: String, required: true },
-  startDate: { type: String, required: true },
-  endDate: { type: String, required: true },
-  photoPaths: { type: [String], required: true },
-  roomTypes: {
-    singleRoom: {
-      available: { type: Boolean, default: false },
-      quantity: { type: Number, default: 0 },
-      price: { type: Number, default: 0 }
-    },
-    doubleRoom: {
-      available: { type: Boolean, default: false },
-      quantity: { type: Number, default: 0 },
-      price: { type: Number, default: 0 }
-    },
-    tripleRoom: {
-      available: { type: Boolean, default: false },
-      quantity: { type: Number, default: 0 },
-      price: { type: Number, default: 0 }
-    },
-    quadRoom: {
-      available: { type: Boolean, default: false },
-      quantity: { type: Number, default: 0 },
-      price: { type: Number, default: 0 }
-    },
-    customRoom: {
-      available: { type: Boolean, default: false },
-      quantity: { type: Number, default: 0 },
-      capacity: { type: Number, default: 0 },
-      price: { type: Number, default: 0 }
+  destinations: [{
+    location: { type: String, required: true },
+    startDate: { type: String, required: true },
+    endDate: { type: String, required: true },
+    photoPaths: { type: [String], required: true },
+    roomTypes: {
+      singleRoom: {
+        available: { type: Boolean, default: false },
+        quantity: { type: Number, default: 0 },
+        price: { type: Number, default: 0 }
+      },
+      doubleRoom: {
+        available: { type: Boolean, default: false },
+        quantity: { type: Number, default: 0 },
+        price: { type: Number, default: 0 }
+      },
+      tripleRoom: {
+        available: { type: Boolean, default: false },
+        quantity: { type: Number, default: 0 },
+        price: { type: Number, default: 0 }
+      },
+      quadRoom: {
+        available: { type: Boolean, default: false },
+        quantity: { type: Number, default: 0 },
+        price: { type: Number, default: 0 }
+      },
+      customRoom: {
+        available: { type: Boolean, default: false },
+        quantity: { type: Number, default: 0 },
+        capacity: { type: Number, default: 0 },
+        price: { type: Number, default: 0 }
+      }
     }
-  }
+  }]
 });
 
 const Package = mongoose.model<IPackage>("Package", packageSchema);
@@ -343,38 +347,53 @@ app.get("/api/packages/:id", async (req: Request, res: Response) => {
 // POST create a new package
 app.post(
   "/api/packages",
-  upload.array("photos", 10),
+  upload.array("photos", 50), // Increased limit to handle multiple destinations
   async (req: Request, res: Response) => {
     try {
-      const { name, description, isFree, location, startDate, endDate } = req.body;
-      let roomTypes;
+      const { name, description, isFree } = req.body;
+      let destinations;
       try {
-        roomTypes = JSON.parse(req.body.roomTypes);
+        destinations = JSON.parse(req.body.destinations);
       } catch (e) {
-        console.error("Error parsing roomTypes:", e);
-        return res.status(400).json({ message: "Invalid roomTypes data" });
+        console.error("Error parsing destinations:", e);
+        return res.status(400).json({ message: "Invalid destinations data" });
       }
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
         return res.status(400).json({ message: "Photos are required." });
       }
 
-      const photoResults = await Promise.all(
-        (req.files as Express.Multer.File[]).map((file) =>
-          uploadToCloudinary(file.buffer, "umrah-packages")
-        )
+      const files = req.files as Express.Multer.File[];
+      let currentFileIndex = 0;
+      
+      // Process each destination and its photos
+      const processedDestinations = await Promise.all(
+        destinations.map(async (dest: any) => {
+          const numPhotos = dest.photoCount || 0; // Frontend should send photoCount
+          const destinationFiles = files.slice(currentFileIndex, currentFileIndex + numPhotos);
+          currentFileIndex += numPhotos;
+
+          const photoResults = await Promise.all(
+            destinationFiles.map((file) =>
+              uploadToCloudinary(file.buffer, "umrah-packages")
+            )
+          );
+
+          return {
+            location: dest.location,
+            startDate: dest.startDate,
+            endDate: dest.endDate,
+            photoPaths: photoResults.map((result) => result.secure_url),
+            roomTypes: dest.roomTypes
+          };
+        })
       );
-      const photoPaths = photoResults.map((result) => result.secure_url);
 
       const newPackage = new Package({
         name,
         description,
         isFree: isFree === "true",
-        location,
-        startDate,
-        endDate,
-        photoPaths,
-        roomTypes
+        destinations: processedDestinations
       });
 
       await newPackage.save();
@@ -392,7 +411,7 @@ app.put(
   upload.array("photos", 10),
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, description, isFree, location, startDate, endDate } = req.body;
+    const { name, description, isFree, destinations } = req.body;
     
     try {
       let roomTypes;
@@ -407,10 +426,7 @@ app.put(
         name,
         description,
         isFree: isFree === "true",
-        location,
-        startDate,
-        endDate,
-        roomTypes
+        destinations
       };
 
       if (req.files && (req.files as Express.Multer.File[]).length > 0) {

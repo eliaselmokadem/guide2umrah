@@ -379,12 +379,21 @@ app.post(
             )
           );
 
+          // Parse the stringified roomTypes
+          let roomTypes;
+          try {
+            roomTypes = JSON.parse(dest.roomTypes);
+          } catch (e) {
+            console.error("Error parsing roomTypes:", e);
+            throw new Error("Invalid roomTypes data");
+          }
+
           return {
             location: dest.location,
             startDate: dest.startDate,
             endDate: dest.endDate,
             photoPaths: photoResults.map((result) => result.secure_url),
-            roomTypes: dest.roomTypes
+            roomTypes: roomTypes
           };
         })
       );

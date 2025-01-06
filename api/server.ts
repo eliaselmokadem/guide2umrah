@@ -347,40 +347,44 @@ app.get("/api/packages/:id", async (req: Request, res: Response) => {
 // POST create a new package
 app.post(
   "/api/packages",
-  upload.array("photos", 10),
+  upload.array("photos", 50), // Increased limit to handle multiple destinations
   async (req: Request, res: Response) => {
     try {
-      const { name, description, isFree, destinations } = req.body;
-      let roomTypes;
+      const { name, description, isFree } = req.body;
+      let destinations;
+
       try {
-        roomTypes = JSON.parse(req.body.roomTypes);
+        destinations = JSON.parse(req.body.destinations);
       } catch (e) {
-        console.error("Error parsing roomTypes:", e);
-        return res.status(400).json({ message: "Invalid roomTypes data" });
+        console.error("Error parsing destinations:", e);
+        return res.status(400).json({ message: "Invalid destinations data" });
       }
 
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
         return res.status(400).json({ message: "Photos are required." });
       }
 
+      const files = req.files as Express.Multer.File[];
       const photoResults = await Promise.all(
-        (req.files as Express.Multer.File[]).map((file) =>
-          uploadToCloudinary(file.buffer, "umrah-packages")
-        )
+        files.map(file => uploadToCloudinary(file.buffer, "umrah-packages"))
       );
-      const photoPaths = photoResults.map((result) => result.secure_url);
+
+      const photoPaths = photoResults.map(result => result.secure_url);
+      const photosPerDestination = Math.floor(photoPaths.length / destinations.length);
+
+      const destinationsWithPhotos = destinations.map((destination: any, index: number) => ({
+        ...destination,
+        photoPaths: photoPaths.slice(
+          index * photosPerDestination,
+          (index + 1) * photosPerDestination
+        )
+      }));
 
       const newPackage = new Package({
         name,
         description,
         isFree: isFree === "true",
-        destinations: destinations.map((destination: any) => ({
-          location: destination.location,
-          startDate: destination.startDate,
-          endDate: destination.endDate,
-          photoPaths: photoPaths,
-          roomTypes: roomTypes
-        }))
+        destinations: destinationsWithPhotos
       });
 
       await newPackage.save();

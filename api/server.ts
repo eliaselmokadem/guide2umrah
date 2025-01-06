@@ -150,23 +150,34 @@ const userSchema = new mongoose.Schema<IUser>({
 const User = mongoose.model<IUser>("User", userSchema);
 
 // Package schema and model
+interface RoomType {
+  available: boolean;
+  quantity: number;
+  price: number;
+  capacity?: number;
+}
+
+interface RoomTypes {
+  singleRoom: RoomType;
+  doubleRoom: RoomType;
+  tripleRoom: RoomType;
+  quadRoom: RoomType;
+  customRoom: RoomType & { capacity: number };
+}
+
+interface Destination {
+  location: string;
+  startDate: string;
+  endDate: string;
+  photoPaths: string[];
+  roomTypes: RoomTypes;
+}
+
 interface IPackage {
   name: string;
   description: string;
   isFree: boolean;
-  destinations: {
-    location: string;
-    startDate: string;
-    endDate: string;
-    photoPaths: string[];
-    roomTypes: {
-      singleRoom: { available: boolean; quantity: number; price: number };
-      doubleRoom: { available: boolean; quantity: number; price: number };
-      tripleRoom: { available: boolean; quantity: number; price: number };
-      quadRoom: { available: boolean; quantity: number; price: number };
-      customRoom: { available: boolean; quantity: number; capacity: number; price: number };
-    };
-  }[];
+  destinations: Destination[];
 }
 
 const packageSchema = new mongoose.Schema<IPackage>({
@@ -351,7 +362,12 @@ app.post(
   async (req: Request, res: Response) => {
     try {
       const { name, description, isFree } = req.body;
-      let destinations;
+      let destinations: {
+        location: string;
+        startDate: string;
+        endDate: string;
+        roomTypes: RoomTypes;
+      }[];
 
       try {
         destinations = JSON.parse(req.body.destinations);
@@ -372,12 +388,15 @@ app.post(
       const photoPaths = photoResults.map(result => result.secure_url);
       const photosPerDestination = Math.floor(photoPaths.length / destinations.length);
 
-      const destinationsWithPhotos = destinations.map((destination: any, index: number) => ({
-        ...destination,
+      const destinationsWithPhotos: Destination[] = destinations.map((destination, index) => ({
+        location: destination.location,
+        startDate: destination.startDate,
+        endDate: destination.endDate,
         photoPaths: photoPaths.slice(
           index * photosPerDestination,
           (index + 1) * photosPerDestination
-        )
+        ),
+        roomTypes: destination.roomTypes
       }));
 
       const newPackage = new Package({
@@ -399,40 +418,60 @@ app.post(
 // PUT update a package
 app.put(
   "/api/packages/:id",
-  upload.array("photos", 10),
+  upload.array("photos", 50),
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, description, isFree, destinations } = req.body;
+    const { name, description, isFree } = req.body;
     
     try {
-      let roomTypes;
+      let destinations: {
+        location: string;
+        startDate: string;
+        endDate: string;
+        roomTypes: RoomTypes;
+      }[];
       try {
-        roomTypes = JSON.parse(req.body.roomTypes);
+        destinations = JSON.parse(req.body.destinations);
       } catch (e) {
-        console.error("Error parsing roomTypes:", e);
-        return res.status(400).json({ message: "Invalid roomTypes data" });
+        console.error("Error parsing destinations:", e);
+        return res.status(400).json({ message: "Invalid destinations data" });
       }
 
-      const updateData: any = {
+      const updateData: {
+        name: string;
+        description: string;
+        isFree: boolean;
+        destinations: Destination[];
+      } = {
         name,
         description,
         isFree: isFree === "true",
-        destinations: destinations.map((destination: any) => ({
+        destinations: destinations.map(destination => ({
           location: destination.location,
           startDate: destination.startDate,
           endDate: destination.endDate,
-          roomTypes: roomTypes
+          photoPaths: [],
+          roomTypes: destination.roomTypes
         }))
       };
 
       if (req.files && (req.files as Express.Multer.File[]).length > 0) {
+        const files = req.files as Express.Multer.File[];
         const photoResults = await Promise.all(
-          (req.files as Express.Multer.File[]).map((file) =>
-            uploadToCloudinary(file.buffer, "umrah-packages")
-          )
+          files.map(file => uploadToCloudinary(file.buffer, "umrah-packages"))
         );
-        updateData.destinations = updateData.destinations.map(() => ({
-          photoPaths: photoResults.map((result) => result.secure_url)
+        const photoPaths = photoResults.map(result => result.secure_url);
+        const photosPerDestination = Math.floor(photoPaths.length / destinations.length);
+
+        updateData.destinations = destinations.map((destination, index) => ({
+          location: destination.location,
+          startDate: destination.startDate,
+          endDate: destination.endDate,
+          photoPaths: photoPaths.slice(
+            index * photosPerDestination,
+            (index + 1) * photosPerDestination
+          ),
+          roomTypes: destination.roomTypes
         }));
       }
 

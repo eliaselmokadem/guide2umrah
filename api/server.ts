@@ -1009,6 +1009,77 @@ app.post('/api/booking-request', async (req: Request, res: Response) => {
   }
 });
 
+interface IServiceInquiry {
+  serviceId: string;
+  serviceName: string;
+  price: number | null;
+  userInfo: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    comments?: string;
+  };
+}
+
+// Service inquiry endpoint
+app.post('/api/service-inquiry', async (req: Request, res: Response) => {
+  try {
+    const inquiryData: IServiceInquiry = req.body;
+
+    // Send email to admin
+    await resend.emails.send({
+      from: 'Guide2Umrah <noreply@guide2umrah.com>',
+      to: 'eliaselmok@gmail.com',
+      subject: `Nieuwe Dienst Aanvraag - ${inquiryData.serviceName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #10B981;">Nieuwe Dienst Aanvraag</h2>
+          
+          <h3>Dienst Informatie:</h3>
+          <p>Dienst Naam: ${inquiryData.serviceName}</p>
+          <p>Dienst ID: ${inquiryData.serviceId}</p>
+          ${inquiryData.price ? `<p>Prijs: €${inquiryData.price}</p>` : ''}
+          
+          <h3>Klant Informatie:</h3>
+          <p>Naam: ${inquiryData.userInfo.firstName} ${inquiryData.userInfo.lastName}</p>
+          <p>Email: ${inquiryData.userInfo.email}</p>
+          <p>Telefoon: ${inquiryData.userInfo.phone}</p>
+          ${inquiryData.userInfo.comments ? `<p>Opmerkingen: ${inquiryData.userInfo.comments}</p>` : ''}
+        </div>
+      `
+    });
+
+    // Send confirmation email to customer
+    await resend.emails.send({
+      from: 'Guide2Umrah <noreply@guide2umrah.com>',
+      to: inquiryData.userInfo.email,
+      subject: 'Bevestiging van je Aanvraag - Guide2Umrah',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #10B981;">Bedankt voor je Aanvraag</h2>
+          
+          <p>Beste ${inquiryData.userInfo.firstName},</p>
+          
+          <p>We hebben je aanvraag voor de volgende dienst ontvangen:</p>
+          <p style="font-weight: bold;">${inquiryData.serviceName}</p>
+          
+          ${inquiryData.price ? `<p>Prijs: €${inquiryData.price}</p>` : ''}
+          
+          <p>We nemen zo spoedig mogelijk contact met je op om je aanvraag te bespreken.</p>
+          
+          <p>Met vriendelijke groet,<br>Het Guide2Umrah Team</p>
+        </div>
+      `
+    });
+
+    res.status(200).json({ message: 'Service inquiry received successfully' });
+  } catch (error) {
+    console.error('Error processing service inquiry:', error);
+    res.status(500).json({ error: 'Failed to process service inquiry' });
+  }
+});
+
 // Start the server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

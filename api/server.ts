@@ -915,6 +915,100 @@ app.get('/api/custom-packages', async (req, res) => {
   }
 });
 
+interface IBookingRequest {
+  packageId: string;
+  packageName: string;
+  selectedRooms: Array<{
+    destinationIndex: number;
+    roomType: string;
+    quantity: number;
+    price: number;
+  }>;
+  userInfo: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    comments?: string;
+  };
+}
+
+// Booking request endpoint
+app.post('/api/booking-request', async (req: Request, res: Response) => {
+  try {
+    const bookingData: IBookingRequest = req.body;
+
+    // Send email to admin
+    await resend.emails.send({
+      from: 'Guide2Umrah <noreply@guide2umrah.com>',
+      to: 'eliaselmok@gmail.com', // Replace with actual admin email
+      subject: `Nieuwe Boeking Aanvraag - ${bookingData.packageName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #10B981;">Nieuwe Boeking Aanvraag</h2>
+          
+          <h3>Pakket Informatie:</h3>
+          <p>Pakket Naam: ${bookingData.packageName}</p>
+          <p>Pakket ID: ${bookingData.packageId}</p>
+          
+          <h3>Geselecteerde Kamers:</h3>
+          ${bookingData.selectedRooms.map(room => `
+            <div style="margin-bottom: 10px; padding: 10px; background-color: #f3f4f6;">
+              <p>Kamer Type: ${room.roomType.replace('Room', '-persoonskamer')}</p>
+              <p>Aantal: ${room.quantity}</p>
+              <p>Prijs: €${room.price}</p>
+            </div>
+          `).join('')}
+          
+          <h3>Totaal Bedrag: €${bookingData.selectedRooms.reduce((sum, room) => sum + room.price, 0)}</h3>
+          
+          <h3>Klant Informatie:</h3>
+          <p>Naam: ${bookingData.userInfo.firstName} ${bookingData.userInfo.lastName}</p>
+          <p>Email: ${bookingData.userInfo.email}</p>
+          <p>Telefoon: ${bookingData.userInfo.phone}</p>
+          ${bookingData.userInfo.comments ? `<p>Opmerkingen: ${bookingData.userInfo.comments}</p>` : ''}
+        </div>
+      `
+    });
+
+    // Send confirmation email to customer
+    await resend.emails.send({
+      from: 'Guide2Umrah <noreply@guide2umrah.com>',
+      to: bookingData.userInfo.email,
+      subject: 'Bevestiging van je Boeking Aanvraag - Guide2Umrah',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #10B981;">Bedankt voor je Boeking Aanvraag</h2>
+          
+          <p>Beste ${bookingData.userInfo.firstName},</p>
+          
+          <p>We hebben je aanvraag voor het volgende pakket ontvangen:</p>
+          <p style="font-weight: bold;">${bookingData.packageName}</p>
+          
+          <h3>Je geselecteerde kamers:</h3>
+          ${bookingData.selectedRooms.map(room => `
+            <div style="margin-bottom: 10px; padding: 10px; background-color: #f3f4f6;">
+              <p>Kamer Type: ${room.roomType.replace('Room', '-persoonskamer')}</p>
+              <p>Prijs: €${room.price}</p>
+            </div>
+          `).join('')}
+          
+          <p>Totaal Bedrag: €${bookingData.selectedRooms.reduce((sum, room) => sum + room.price, 0)}</p>
+          
+          <p>We nemen zo spoedig mogelijk contact met je op om je aanvraag te bespreken.</p>
+          
+          <p>Met vriendelijke groet,<br>Het Guide2Umrah Team</p>
+        </div>
+      `
+    });
+
+    res.status(200).json({ message: 'Booking request received successfully' });
+  } catch (error) {
+    console.error('Error processing booking request:', error);
+    res.status(500).json({ error: 'Failed to process booking request' });
+  }
+});
+
 // Start the server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

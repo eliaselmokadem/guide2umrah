@@ -871,7 +871,7 @@ app.post('/api/custom-package', async (req, res) => {
 
     await resend.emails.send({
       from: 'Guide2Umrah <noreply@guide2umrah.com>',
-      to: ['eliaselmok@gmail.com'],
+      to: ['anouarregragui@gmail.com'],
       subject: 'Nieuwe Custom Umrah Pakket Aanvraag',
       html: emailHtml
     });
@@ -941,7 +941,7 @@ app.post('/api/booking-request', async (req: Request, res: Response) => {
     // Send email to admin
     await resend.emails.send({
       from: 'Guide2Umrah <noreply@guide2umrah.com>',
-      to: 'eliaselmok@gmail.com', // Replace with actual admin email
+      to: 'anouarregragui@gmail.com', // Replace with actual admin email
       subject: `Nieuwe Boeking Aanvraag - ${bookingData.packageName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -1030,7 +1030,7 @@ app.post('/api/service-inquiry', async (req: Request, res: Response) => {
     // Send email to admin
     await resend.emails.send({
       from: 'Guide2Umrah <noreply@guide2umrah.com>',
-      to: 'eliaselmok@gmail.com',
+      to: 'anouarregragui@gmail.com',
       subject: `Nieuwe Dienst Aanvraag - ${inquiryData.serviceName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">

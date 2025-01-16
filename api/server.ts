@@ -217,8 +217,8 @@ interface IService {
   description: string;
   isFree: boolean;
   location: string;
-  startDate: string;
-  endDate: string;
+  startDate?: string;  // Made optional
+  endDate?: string;    // Made optional
   photoPaths: string[];
   price: number;
 }
@@ -228,10 +228,10 @@ const serviceSchema = new mongoose.Schema<IService>({
   description: { type: String, required: true },
   isFree: { type: Boolean, default: false },
   location: { type: String, required: true },
-  startDate: { type: String, required: true },
-  endDate: { type: String, required: true },
-  photoPaths: { type: [String], required: true },
-  price: { type: Number, default: 0 }
+  startDate: { type: String, required: false },  // Made optional
+  endDate: { type: String, required: false },    // Made optional
+  photoPaths: { type: [String], default: [] },
+  price: { type: Number, required: true }
 });
 
 const Service = mongoose.model<IService>("Service", serviceSchema);

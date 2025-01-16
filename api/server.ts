@@ -290,6 +290,19 @@ const customPackageSchema = new mongoose.Schema<ICustomPackage>({
 
 const CustomPackage = mongoose.model<ICustomPackage>('CustomPackage', customPackageSchema);
 
+// About Us schema and model
+interface IAboutUs {
+  content: string;
+  updatedAt: Date;
+}
+
+const aboutUsSchema = new mongoose.Schema<IAboutUs>({
+  content: { type: String, required: true },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const AboutUs = mongoose.model<IAboutUs>("AboutUs", aboutUsSchema);
+
 // User login
 app.post("/api/login", async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -1077,6 +1090,35 @@ app.post('/api/service-inquiry', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error processing service inquiry:', error);
     res.status(500).json({ error: 'Failed to process service inquiry' });
+  }
+});
+
+// About Us endpoints
+app.get('/api/about-us', async (req: Request, res: Response) => {
+  try {
+    const aboutUs = await AboutUs.findOne();
+    res.json(aboutUs || { content: '' });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching about us content" });
+  }
+});
+
+app.post('/api/about-us', async (req: Request, res: Response) => {
+  try {
+    const { content } = req.body;
+    const aboutUs = await AboutUs.findOne();
+
+    if (aboutUs) {
+      aboutUs.content = content;
+      aboutUs.updatedAt = new Date();
+      await aboutUs.save();
+    } else {
+      await AboutUs.create({ content });
+    }
+
+    res.json({ message: "About us content updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating about us content" });
   }
 });
 

@@ -31,6 +31,7 @@ app.use(
       "https://guide2umrah.be",
       "https://guide2umrah.nl",
       "https://guide2umrah.eu",
+      "https://guide2umrah-api.herokuapp.com"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -1122,9 +1123,42 @@ app.post('/api/about-us', async (req: Request, res: Response) => {
   }
 });
 
-// Add root route handler
+// Root route handler
 app.get("/", (req: Request, res: Response) => {
-  res.json({ message: "Guide2Umrah API is running!" });
+  // Check if the client accepts HTML
+  const acceptsHtml = req.accepts('html');
+  const acceptsJson = req.accepts('json');
+
+  if (acceptsHtml) {
+    res.send(`
+      <html>
+        <head>
+          <title>Guide2Umrah API</title>
+          <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; line-height: 1.6; }
+            h1 { color: #333; }
+            .endpoint { background: #f4f4f4; padding: 10px; margin: 10px 0; border-radius: 4px; }
+          </style>
+        </head>
+        <body>
+          <h1>Guide2Umrah API</h1>
+          <p>The API is running successfully. Available endpoints:</p>
+          <div class="endpoint">/api/packages - Get all packages</div>
+          <div class="endpoint">/api/services - Get all services</div>
+          <div class="endpoint">/api/about-us - Get about us content</div>
+        </body>
+      </html>
+    `);
+  } else {
+    res.json({ 
+      message: "Guide2Umrah API is running!",
+      endpoints: {
+        packages: "/api/packages",
+        services: "/api/services",
+        aboutUs: "/api/about-us"
+      }
+    });
+  }
 });
 
 // Start the server

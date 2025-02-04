@@ -28,7 +28,7 @@
     "typescript": "^5.2.2"
   },
   "scripts": {
-    "start": "node dist/api/server.js",
+    "start": "node dist/server.js",
     "build": "tsc",
     "dev": "ts-node api/server.ts",
     "postinstall": "npm run build"

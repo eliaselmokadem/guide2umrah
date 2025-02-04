@@ -1122,6 +1122,11 @@ app.post('/api/about-us', async (req: Request, res: Response) => {
   }
 });
 
+// Add root route handler
+app.get("/", (req: Request, res: Response) => {
+  res.json({ message: "Guide2Umrah API is running!" });
+});
+
 // Start the server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
